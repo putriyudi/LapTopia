@@ -1,0 +1,153 @@
+// backend/routes/transaksi.js
+const express = require('express');
+const { body, validationResult } = require('express-validator');
+const db = require('../db');
+const { verifyToken, isUser } = require('../middleware/auth');
+const { uploadKTP, handleUploadError } = require('../middleware/upload');
+
+const router = express.Router();
+
+// ── HELPER: hitung total biaya ────────────────────────────
+function hitungTotal(hargaPerHari, durasi) {
+  return parseFloat(hargaPerHari) * parseInt(durasi);
+}
+
+// ── CREATE BOOKING (guest atau user login) ────────────────
+// Guest: tidak kirim Authorization header
+// User login: kirim token, data di-autofill dari profil
+router.post('/booking',
+  uploadKTP.single('jaminan_ktp'),
+  handleUploadError,
+  [
+    body('id_laptop').isInt({ min: 1 }),
+    body('nama_penyewa').trim().isLength({ min: 3 }),
+    body('nik_penyewa').isLength({ min: 16, max: 16 }).isNumeric(),
+    body('no_hp_penyewa').trim().notEmpty(),
+    body('alamat_penyewa').trim().isLength({ min: 5 }),
+    body('email_penyewa').isEmail().normalizeEmail(),
+    body('tgl_mulai_sewa').isISO8601(),
+    body('durasi_hari').isInt({ min: 1, max: 90 })
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'Foto KTP/jaminan wajib diupload.' });
+    }
+
+    const {
+      id_laptop, nama_penyewa, nik_penyewa, no_hp_penyewa,
+      alamat_penyewa, email_penyewa, tgl_mulai_sewa, durasi_hari
+    } = req.body;
+
+    // Cek apakah request dari user login
+    let id_user_penyewa = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+        id_user_penyewa = decoded.id_user;
+      } catch { /* token invalid, treat as guest */ }
+    }
+
+    try {
+      // Cek laptop tersedia
+      const [laptops] = await db.query(
+        'SELECT * FROM laptops WHERE id_laptop = ? AND status = "Tersedia"',
+        [id_laptop]
+      );
+      if (!laptops.length) {
+        return res.status(409).json({ success: false, message: 'Laptop tidak tersedia.' });
+      }
+
+      const laptop = laptops[0];
+      const tglMulai   = new Date(tgl_mulai_sewa);
+      const tglRencana = new Date(tglMulai);
+      tglRencana.setDate(tglRencana.getDate() + parseInt(durasi_hari));
+      const total = hitungTotal(laptop.harga_sewa_per_hari, durasi_hari);
+
+      const [result] = await db.query(
+        `INSERT INTO transaksi
+          (id_user_penyewa, id_laptop, nama_penyewa, nik_penyewa, no_hp_penyewa,
+           alamat_penyewa, email_penyewa, jaminan_file_path,
+           tgl_mulai_sewa, durasi_hari, tgl_kembali_rencana, total_biaya, status_transaksi)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Booking')`,
+        [
+          id_user_penyewa, id_laptop, nama_penyewa, nik_penyewa, no_hp_penyewa,
+          alamat_penyewa, email_penyewa, req.file.path,
+          tglMulai, parseInt(durasi_hari), tglRencana, total
+        ]
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Booking berhasil! Silakan lanjutkan pembayaran.',
+        data: {
+          id_transaksi:        result.insertId,
+          total_biaya:         total,
+          tgl_kembali_rencana: tglRencana
+        }
+      });
+    } catch (err) {
+      console.error('Booking error:', err);
+      res.status(500).json({ success: false, message: 'Server error.' });
+    }
+  }
+);
+
+// ── RIWAYAT SEWA (user login) ─────────────────────────────
+router.get('/riwayat', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT t.*, l.merk_tipe, l.nomor_seri, l.harga_sewa_per_hari,
+              k.file_pdf_path, k.digital_hash
+       FROM transaksi t
+       JOIN laptops l ON l.id_laptop = t.id_laptop
+       LEFT JOIN kontrak_digital k ON k.id_transaksi = t.id_transaksi
+       WHERE t.id_user_penyewa = ?
+       ORDER BY t.created_at DESC`,
+      [req.user.id_user]
+    );
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── DETAIL TRANSAKSI ──────────────────────────────────────
+router.get('/:id', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT t.*, l.merk_tipe, l.nomor_seri, l.spesifikasi, l.harga_sewa_per_hari,
+              u.nama_lengkap AS kasir_nama,
+              k.file_pdf_path, k.digital_hash, k.tgl_generate
+       FROM transaksi t
+       JOIN laptops l ON l.id_laptop = t.id_laptop
+       LEFT JOIN users u ON u.id_user = t.id_kasir
+       LEFT JOIN kontrak_digital k ON k.id_transaksi = t.id_transaksi
+       WHERE t.id_transaksi = ?`,
+      [req.params.id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Transaksi tidak ditemukan.' });
+    }
+
+    const trx = rows[0];
+
+    // User biasa hanya bisa lihat transaksinya sendiri
+    if (req.user.role === 'user' && trx.id_user_penyewa !== req.user.id_user) {
+      return res.status(403).json({ success: false, message: 'Akses ditolak.' });
+    }
+
+    res.json({ success: true, data: trx });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+module.exports = router;
