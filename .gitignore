@@ -1,0 +1,18 @@
+# Mengabaikan folder library (ukurannya sangat besar)
+node_modules/
+
+# Mengabaikan file konfigurasi sensitif (password DB, API key, dll)
+.env
+
+# Mengabaikan isi folder uploads (foto KTP, dll)
+# Tapi tetap menyisakan foldernya agar tidak error saat di-clone
+uploads/ktp/*
+!uploads/ktp/.gitkeep
+
+# Mengabaikan file log
+*.log
+npm-debug.log*
+
+# Mengabaikan folder OS
+.DS_Store
+Thumbs.db
