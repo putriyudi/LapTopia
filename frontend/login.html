@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="text-center mb-4">
+        <a href="/" class="logo">Laptop<span>Rent</span></a>
+        <h2 class="mt-2" style="font-size: 1.5rem;">Masuk ke Akun Anda</h2>
+        <p class="text-muted mt-1" style="font-size: 0.9rem;">Masukkan email dan password untuk melanjutkan.</p>
+      </div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required placeholder="nama@email.com">
+        </div>
+        <div class="form-group mb-4">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" required placeholder="••••••••">
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem;">Masuk</button>
+      </form>
+      <div class="text-center mt-4" style="font-size: 0.9rem;">
+        Belum punya akun? <a href="/register.html" style="font-weight: 500;">Daftar di sini (Khusus User)</a>
+      </div>
+      <div class="text-center mt-2" style="font-size: 0.8rem; color: var(--text-muted);">
+        Catatan: Akun Admin dan Kasir dibuat secara internal.
+      </div>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      redirectIfAuthenticated();
+      
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        showLoader();
+        const res = await apiCall('/auth/login', 'POST', { email, password });
+        hideLoader();
+        
+        if (res.status === 200) {
+          setAuth(res.data.token, res.data.user);
+          showToast('Login berhasil!', 'success');
+          
+          setTimeout(() => {
+            if (res.data.user.role === 'admin') window.location.href = '/dashboard-admin.html';
+            else if (res.data.user.role === 'kasir') window.location.href = '/dashboard-kasir.html';
+            else window.location.href = '/dashboard-user.html';
+          }, 1000);
+        } else {
+          showToast(res.data.message || 'Email atau password salah.', 'error');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

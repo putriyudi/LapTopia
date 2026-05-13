@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Katalog — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .katalog-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 2rem;
+      padding: 3rem 0;
+    }
+    .filter-sidebar {
+      background: white;
+      padding: 1.5rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      height: max-content;
+      position: sticky;
+      top: 100px;
+    }
+    .filter-section {
+      margin-bottom: 1.5rem;
+    }
+    .filter-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--secondary-color);
+      margin-bottom: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .laptop-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .laptop-image-placeholder {
+      background: rgba(37,99,235,0.05);
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--accent-color);
+    }
+    .laptop-content {
+      padding: 1.2rem;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .laptop-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+    .laptop-spec {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      flex-grow: 1;
+    }
+    .laptop-price {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+    }
+    .laptop-price span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    @media (max-width: 768px) {
+      .katalog-layout {
+        grid-template-columns: 1fr;
+      }
+      .filter-sidebar {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">Laptop<span>Rent</span></a>
+      <div class="nav-links">
+        <a href="/katalog.html" style="color: var(--accent-color);">Katalog</a>
+        <a href="/#cara-sewa">Cara Sewa</a>
+        <div id="auth-nav" style="display: flex; align-items: center;"></div>
+      </div>
+    </div>
+  </nav>
+  <main class="container katalog-layout">
+    <aside class="filter-sidebar">
+      <h3 class="mb-3">Filter</h3>
+      
+      <div class="filter-section">
+        <div class="filter-title">Pencarian</div>
+        <input type="text" id="search" class="form-control" placeholder="Cari merk, spek...">
+      </div>
+      
+      <div class="filter-section">
+        <div class="filter-title">Merk</div>
+        <select id="merk" class="form-control">
+          <option value="">Semua Merk</option>
+          <!-- Diisi JS -->
+        </select>
+      </div>
+      <div class="filter-section">
+        <div class="filter-title">Status</div>
+        <select id="status" class="form-control">
+          <option value="">Semua Status</option>
+          <option value="Tersedia">Tersedia</option>
+          <option value="Disewa">Disewa</option>
+          <option value="Maintenance">Maintenance</option>
+        </select>
+      </div>
+      
+      <button class="btn btn-primary" style="width:100%" onclick="loadKatalog(1)">Terapkan Filter</button>
+    </aside>
+    <section>
+      <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="font-size: 1.8rem;">Katalog Laptop</h2>
+        <span id="totalItems" class="text-muted" style="font-size: 0.9rem;">Memuat...</span>
+      </div>
+      
+      <div class="grid grid-cols-3" id="katalogGrid">
+        <!-- Diisi JS -->
+      </div>
+      
+      <div id="pagination" class="mt-4" style="display: flex; gap: 0.5rem; justify-content: center;">
+        <!-- Diisi JS -->
+      </div>
+    </section>
+  </main>
+  <script src="/js/api.js"></script>
+  <script>
+    let currentPage = 1;
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Load merks
+      const resMerk = await apiCall('/laptops/meta/merks');
+      if (resMerk && resMerk.status === 200) {
+        const merkSelect = document.getElementById('merk');
+        resMerk.data.data.forEach(m => {
+          merkSelect.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+      }
+      
+      loadKatalog(1);
+    });
+    async function loadKatalog(page = 1) {
+      currentPage = page;
+      const search = document.getElementById('search').value;
+      const merk = document.getElementById('merk').value;
+      const status = document.getElementById('status').value;
+      
+      let query = `?page=${page}&limit=9`;
+      if (search) query += `&search=${encodeURIComponent(search)}`;
+      if (merk) query += `&merk=${encodeURIComponent(merk)}`;
+      if (status) query += `&status=${encodeURIComponent(status)}`;
+      
+      showLoader();
+      const res = await apiCall(`/laptops${query}`);
+      hideLoader();
+      
+      const grid = document.getElementById('katalogGrid');
+      grid.innerHTML = '';
+      
+      if (res && res.status === 200) {
+        const { data, pagination } = res.data;
+        document.getElementById('totalItems').innerText = `${pagination.total} Laptop Ditemukan`;
+        
+        if (data.length === 0) {
+          grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Tidak ada laptop yang sesuai dengan filter.</div>`;
+        }
+        
+        data.forEach(laptop => {
+          const isTersedia = laptop.status === 'Tersedia';
+          const btnClass = isTersedia ? 'btn-primary' : 'btn-outline';
+          const btnText = isTersedia ? 'Sewa Sekarang' : laptop.status;
+          const btnAction = isTersedia ? `window.location.href='/checkout.html?id=${laptop.id_laptop}'` : '';
+          const disabled = !isTersedia ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '';
+          
+          grid.innerHTML += `
+            <div class="card laptop-card">
+              <div class="laptop-image-placeholder">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 60px; height: 60px; opacity: 0.5;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              </div>
+              <div class="laptop-content">
+                <div class="laptop-title">${laptop.merk_tipe}</div>
+                <div class="laptop-spec">${laptop.spesifikasi || '-'}</div>
+                <div class="laptop-price">${formatRupiah(laptop.harga_sewa_per_hari)} <span>/ hari</span></div>
+                <button class="btn ${btnClass}" style="width: 100%" onclick="${btnAction}" ${disabled}>
+                  ${btnText}
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        
+        renderPagination(pagination);
+      }
+    }
+    function renderPagination(pg) {
+      const container = document.getElementById('pagination');
+      container.innerHTML = '';
+      if (pg.pages <= 1) return;
+      
+      for (let i = 1; i <= pg.pages; i++) {
+        container.innerHTML += `
+          <button class="btn ${i === pg.page ? 'btn-primary' : 'btn-outline'}" 
+                  style="padding: 0.4rem 0.8rem;" 
+                  onclick="loadKatalog(${i})">
+            ${i}
+          </button>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasir POS — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="logo" style="font-size: 1.2rem;">Laptop<span>Rent</span> POS</a>
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">Kasir Mode</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" onclick="loadBookings()">Transaksi / POS</a>
+        <a href="/" class="sidebar-link" target="_blank">Lihat Website</a>
+        <a href="#" class="sidebar-link" onclick="logout()" style="color: #fca5a5; margin-top: auto;">Logout</a>
+      </nav>
+    </aside>
+    <main class="dashboard-content">
+      <div class="dashboard-topbar">
+        <h2 style="font-size: 1.25rem;">Manajemen Transaksi (Serah Terima & Pengembalian)</h2>
+        <div style="font-size: 0.9rem;" id="kasirName">Loading...</div>
+      </div>
+      <div class="dashboard-main">
+        <div class="card mb-4">
+          <div class="card-body" style="display: flex; gap: 1rem;">
+            <select id="filterStatus" class="form-control" style="width: 200px;" onchange="loadBookings()">
+              <option value="">Semua Status</option>
+              <option value="Booking">Menunggu Serah Terima (Booking)</option>
+              <option value="Aktif">Sedang Disewa (Aktif)</option>
+              <option value="Terlambat">Terlambat</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadBookings()">Refresh Data</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Penyewa</th>
+                    <th>Laptop</th>
+                    <th>Tgl Rencana Kembali</th>
+                    <th>Status</th>
+                    <th>Aksi POS</th>
+                  </tr>
+                </thead>
+                <tbody id="posTable">
+                  <tr><td colspan="6" class="text-center">Memuat data...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <!-- Modal Serah Terima -->
+  <div id="modalSerahTerima" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn" style="position:absolute; top:10px; right:10px;" onclick="closeModal('modalSerahTerima')">✕</button>
+      <div class="card-header">
+        <h3>Proses Serah Terima</h3>
+      </div>
+      <div class="card-body">
+        <p class="mb-3 text-muted">Pastikan Anda telah mengecek KTP fisik pelanggan dan kondisi laptop.</p>
+        <input type="hidden" id="st_id_transaksi">
+        <div class="form-group">
+          <label class="form-label">Verifikasi Jaminan Fisik</label>
+          <select id="st_jaminan_fisik" class="form-control" required>
+            <option value="">-- Pilih Jenis Jaminan yang ditahan --</option>
+            <option value="KTP Asli Ditahan">KTP Asli Ditahan</option>
+            <option value="SIM Asli Ditahan">SIM Asli Ditahan</option>
+            <option value="Deposit Uang Tunai">Deposit Uang Tunai</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitSerahTerima()">Konfirmasi & Generate Kontrak</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Pengembalian -->
+  <div id="modalPengembalian" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn" style="position:absolute; top:10px; right:10px;" onclick="closeModal('modalPengembalian')">✕</button>
+      <div class="card-header">
+        <h3>Proses Pengembalian</h3>
+      </div>
+      <div class="card-body">
+        <input type="hidden" id="pg_id_transaksi">
+        <div class="form-group">
+          <label class="form-label">Catatan Kondisi Laptop</label>
+          <input type="text" id="pg_kondisi" class="form-control" placeholder="Aman / Ada Lecet">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Denda Tambahan (Kerusakan dll) Rp</label>
+          <input type="number" id="pg_denda" class="form-control" value="0" min="0">
+        </div>
+        <button class="btn btn-primary" style="width:100%; background:var(--success)" onclick="submitPengembalian()">Konfirmasi Pengembalian</button>
+      </div>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const auth = requireAuth(['kasir', 'admin']);
+      if (!auth) return;
+      document.getElementById('kasirName').innerText = `Kasir: ${auth.nama_lengkap}`;
+      loadBookings();
+    });
+    async function loadBookings() {
+      const status = document.getElementById('filterStatus').value;
+      const url = status ? `/kasir/bookings?status=${status}` : `/kasir/bookings`;
+      
+      showLoader();
+      const res = await apiCall(url);
+      hideLoader();
+      const tbody = document.getElementById('posTable');
+      tbody.innerHTML = '';
+      if (res && res.status === 200) {
+        const data = res.data.data;
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center">Tidak ada transaksi ditemukan.</td></tr>`;
+          return;
+        }
+        data.forEach(trx => {
+          let statusBadge = `<span class="badge badge-secondary">${trx.status_transaksi}</span>`;
+          if(trx.status_transaksi === 'Aktif') statusBadge = `<span class="badge badge-primary">Aktif</span>`;
+          else if(trx.status_transaksi === 'Booking') statusBadge = `<span class="badge badge-warning">Booking</span>`;
+          else if(trx.status_transaksi === 'Selesai') statusBadge = `<span class="badge badge-success">Selesai</span>`;
+          
+          let actionBtns = '';
+          
+          if (trx.status_transaksi === 'Booking' && trx.payment_status === 'paid') {
+            actionBtns = `<button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="openSerahTerima(${trx.id_transaksi})">Serah Terima</button>`;
+          } else if (trx.status_transaksi === 'Aktif' || trx.status_transaksi === 'Terlambat') {
+            actionBtns = `<button class="btn btn-success" style="padding:0.4rem 0.8rem; font-size:0.8rem; background:var(--success); border-color:var(--success); color:white;" onclick="openPengembalian(${trx.id_transaksi})">Kembalikan</button>
+                          <a href="/api/kasir/kontrak/${trx.id_transaksi}" class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-left:0.5rem;" target="_blank">Unduh Kontrak</a>`;
+          } else if (trx.status_transaksi === 'Selesai') {
+            actionBtns = `<a href="/api/kasir/kontrak/${trx.id_transaksi}" class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem;" target="_blank">Lihat Kontrak</a>`;
+          } else if (trx.status_transaksi === 'Booking' && trx.payment_status !== 'paid') {
+             actionBtns = `<span class="text-muted" style="font-size:0.8rem;">Menunggu Pembayaran</span>`;
+          }
+          tbody.innerHTML += `
+            <tr>
+              <td>#${trx.id_transaksi}</td>
+              <td>
+                <div style="font-weight:600;">${trx.nama_penyewa}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted)">${trx.no_hp_penyewa}</div>
+              </td>
+              <td>
+                <div style="font-weight:600;">${trx.merk_tipe}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted)">SN: ${trx.nomor_seri}</div>
+              </td>
+              <td>${formatJustDate(trx.tgl_kembali_rencana)}</td>
+              <td>${statusBadge}</td>
+              <td>${actionBtns}</td>
+            </tr>
+          `;
+        });
+      }
+    }
+    function openSerahTerima(id) {
+      document.getElementById('st_id_transaksi').value = id;
+      document.getElementById('st_jaminan_fisik').value = '';
+      document.getElementById('modalSerahTerima').style.display = 'flex';
+    }
+    async function submitSerahTerima() {
+      const id = document.getElementById('st_id_transaksi').value;
+      const jaminan = document.getElementById('st_jaminan_fisik').value;
+      if(!jaminan) {
+        showToast("Pilih jenis jaminan fisik", "warning");
+        return;
+      }
+      showLoader();
+      const res = await apiCall(`/kasir/serah-terima/${id}`, 'POST', { jaminan_fisik: jaminan });
+      hideLoader();
+      if(res && res.status === 200) {
+        showToast("Serah terima berhasil. Kontrak digenerate.", "success");
+        closeModal('modalSerahTerima');
+        loadBookings();
+      } else {
+        showToast(res.data.message || "Gagal proses.", "error");
+      }
+    }
+    function openPengembalian(id) {
+      document.getElementById('pg_id_transaksi').value = id;
+      document.getElementById('pg_kondisi').value = '';
+      document.getElementById('pg_denda').value = '0';
+      document.getElementById('modalPengembalian').style.display = 'flex';
+    }
+    async function submitPengembalian() {
+      const id = document.getElementById('pg_id_transaksi').value;
+      const kondisi = document.getElementById('pg_kondisi').value;
+      const denda = document.getElementById('pg_denda').value;
+      showLoader();
+      const res = await apiCall(`/kasir/pengembalian/${id}`, 'POST', { kondisi_catatan: kondisi, denda_tambahan: Number(denda) });
+      hideLoader();
+      if(res && res.status === 200) {
+        showToast("Pengembalian berhasil diproses.", "success");
+        closeModal('modalPengembalian');
+        loadBookings();
+      } else {
+        showToast(res.data.message || "Gagal proses.", "error");
+      }
+    }
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+  </script>
+</body>
+</html>

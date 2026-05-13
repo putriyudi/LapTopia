@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout Sewa — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .checkout-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 2rem;
+      padding: 3rem 0;
+    }
+    .summary-card {
+      position: sticky;
+      top: 100px;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+    }
+    .summary-card .card-header {
+      background: rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: white;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    .summary-row.total {
+      border-top: 1px dashed rgba(255,255,255,0.2);
+      padding-top: 1rem;
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+    }
+    @media (max-width: 768px) {
+      .checkout-layout {
+        grid-template-columns: 1fr;
+      }
+      .summary-card {
+        position: static;
+        order: -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">Laptop<span>Rent</span></a>
+      <div class="nav-links">
+        <a href="/katalog.html">Katalog</a>
+        <div id="auth-nav" style="display: flex; align-items: center;"></div>
+      </div>
+    </div>
+  </nav>
+  <main class="container checkout-layout">
+    <div>
+      <div class="mb-4">
+        <h2 style="font-size: 1.8rem;">Checkout Sewa</h2>
+        <p class="text-muted" id="authStatusText">Isi form di bawah ini untuk melanjutkan penyewaan.</p>
+      </div>
+      <form id="checkoutForm" class="card" enctype="multipart/form-data">
+        <div class="card-header">
+          <h3 style="font-size: 1.1rem;">Data Penyewa</h3>
+        </div>
+        <div class="card-body">
+          <input type="hidden" id="id_laptop" name="id_laptop">
+          
+          <div class="grid grid-cols-2">
+            <div class="form-group">
+              <label class="form-label">Nama Lengkap</label>
+              <input type="text" id="nama_penyewa" name="nama_penyewa" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">NIK KTP</label>
+              <input type="text" id="nik_penyewa" name="nik_penyewa" class="form-control" required minlength="16" maxlength="16">
+            </div>
+            <div class="form-group">
+              <label class="form-label">No. HP / WhatsApp</label>
+              <input type="tel" id="no_hp_penyewa" name="no_hp_penyewa" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" id="email_penyewa" name="email_penyewa" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group mt-1">
+            <label class="form-label">Alamat Pengiriman / Domisili</label>
+            <input type="text" id="alamat_penyewa" name="alamat_penyewa" class="form-control" required>
+          </div>
+          
+          <!-- Hanya muncul jika guest -->
+          <div id="guestKtpSection" class="form-group mt-3" style="background: rgba(37,99,235,0.05); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px dashed var(--accent-color);">
+            <label class="form-label" style="color: var(--primary-color);">Upload Foto KTP Asli (Sebagai Jaminan)</label>
+            <input type="file" id="jaminan_ktp" name="jaminan_ktp" class="form-control" accept="image/jpeg, image/png, image/jpg" style="background: white; margin-bottom: 0.5rem;">
+            <p style="font-size: 0.8rem; color: var(--text-muted);"><strong style="color:var(--primary-color);">🔒 Keamanan Terjamin:</strong> Data KTP Anda dilindungi sistem dan tidak dapat diakses publik.</p>
+          </div>
+          <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Detail Sewa</h3>
+          <div class="grid grid-cols-2">
+            <div class="form-group">
+              <label class="form-label">Tanggal Mulai Sewa</label>
+              <input type="date" id="tgl_mulai_sewa" name="tgl_mulai_sewa" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Durasi (Hari)</label>
+              <input type="number" id="durasi_hari" name="durasi_hari" class="form-control" required min="1" max="90" value="1" onchange="calcTotal()">
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <div class="card summary-card">
+        <div class="card-header">
+          <h3 style="font-size: 1.1rem; color: white;">Ringkasan Pesanan</h3>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center;">
+            <div style="background: rgba(255,255,255,0.1); width: 50px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            </div>
+            <div>
+              <div style="font-weight: 600; font-size: 1.1rem;" id="sum_merk">Memuat...</div>
+              <div style="font-size: 0.85rem; color: #94a3b8;" id="sum_seri">-</div>
+            </div>
+          </div>
+          
+          <div class="summary-row">
+            <span>Harga Sewa per Hari</span>
+            <span id="sum_price_per_day">Rp 0</span>
+          </div>
+          <div class="summary-row">
+            <span>Durasi</span>
+            <span id="sum_durasi_label">1 Hari</span>
+          </div>
+          
+          <div class="summary-row total">
+            <span>Total Bayar</span>
+            <span id="sum_total_price">Rp 0</span>
+          </div>
+          
+          <button class="btn btn-primary mt-4" style="width: 100%; padding: 1rem; background: var(--success); border-color: var(--success); font-size: 1rem;" onclick="submitCheckout()">
+            Lanjut Pembayaran
+          </button>
+          
+          <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: #94a3b8;">
+            Pembayaran diproses secara aman oleh <strong>Midtrans</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Midtrans Snap.js -->
+  <script id="midtransScript"></script>
+  <script src="/js/api.js"></script>
+  <script>
+    let currentLaptop = null;
+    let authData = null;
+    document.addEventListener('DOMContentLoaded', async () => {
+      authData = getAuth();
+      const urlParams = new URLSearchParams(window.location.search);
+      const laptopId = urlParams.get('id');
+      
+      if (!laptopId) {
+        window.location.href = '/katalog.html';
+        return;
+      }
+      
+      document.getElementById('id_laptop').value = laptopId;
+      document.getElementById('tgl_mulai_sewa').min = new Date().toISOString().split('T')[0];
+      document.getElementById('tgl_mulai_sewa').value = new Date().toISOString().split('T')[0];
+      
+      // Load Midtrans client key
+      const resKey = await apiCall('/config/client-key');
+      if (resKey && resKey.status === 200) {
+        const script = document.getElementById('midtransScript');
+        script.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+        script.setAttribute('data-client-key', resKey.data.client_key);
+      }
+      // Load laptop detail
+      showLoader();
+      const resLap = await apiCall(`/laptops/${laptopId}`);
+      if (resLap && resLap.status === 200) {
+        currentLaptop = resLap.data.data;
+        document.getElementById('sum_merk').innerText = currentLaptop.merk_tipe;
+        document.getElementById('sum_seri').innerText = `SN: ${currentLaptop.nomor_seri}`;
+        document.getElementById('sum_price_per_day').innerText = formatRupiah(currentLaptop.harga_sewa_per_hari);
+        calcTotal();
+      } else {
+        alert("Laptop tidak ditemukan");
+        window.location.href = '/katalog.html';
+      }
+      hideLoader();
+      // Handle Form Autofill & KTP input requirement
+      const ktpInput = document.getElementById('jaminan_ktp');
+      const ktpSection = document.getElementById('guestKtpSection');
+      
+      if (authData && authData.user.role === 'user') {
+        // Autofill
+        document.getElementById('nama_penyewa').value = authData.user.nama_lengkap;
+        document.getElementById('nik_penyewa').value = authData.user.nik || '';
+        document.getElementById('no_hp_penyewa').value = authData.user.no_hp;
+        document.getElementById('email_penyewa').value = authData.user.email;
+        document.getElementById('alamat_penyewa').value = authData.user.alamat || '';
+        
+        // Hide KTP upload (using profile's KTP implicitly via token in backend)
+        ktpSection.style.display = 'none';
+        ktpInput.removeAttribute('required');
+        
+        document.getElementById('authStatusText').innerHTML = `Anda login sebagai <strong>${authData.user.nama_lengkap}</strong>. Data telah diisi otomatis.`;
+      } else {
+        ktpInput.setAttribute('required', 'required');
+        document.getElementById('authStatusText').innerHTML = `Sewa sebagai Guest. <a href="/login.html">Login</a> untuk isi otomatis.`;
+      }
+    });
+    function calcTotal() {
+      if (!currentLaptop) return;
+      const durasi = parseInt(document.getElementById('durasi_hari').value) || 0;
+      const total = durasi * currentLaptop.harga_sewa_per_hari;
+      document.getElementById('sum_durasi_label').innerText = `${durasi} Hari`;
+      document.getElementById('sum_total_price').innerText = formatRupiah(total);
+    }
+    async function submitCheckout() {
+      const form = document.getElementById('checkoutForm');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      const formData = new FormData(form);
+      
+      // Khusus user login: Jika jaminan_ktp kosong (karena disembunyikan), kita tidak perlu kirim form data ini, tapi backend /booking mewajibkan jaminan_ktp uploadKTP.
+      // Ah, wait. Di backend `transaksi.js`, `/booking` route:
+      // if (!req.file) { return res.status(400).json({ success: false, message: 'Foto KTP/jaminan wajib diupload.' }); }
+      // This means backend ALWAYS requires KTP upload for booking, even for logged-in users.
+      // Let's modify the frontend to always ask for KTP upload (maybe the physical KTP for this specific transaction) 
+      // OR let the user know they need to upload it again for the booking contract jaminan.
+      // I will make it visible and required for everyone to comply with backend constraints without modifying backend.
+      
+      const ktpInput = document.getElementById('jaminan_ktp');
+      if(ktpInput.files.length === 0) {
+        document.getElementById('guestKtpSection').style.display = 'block';
+        showToast("Harap upload foto KTP untuk transaksi ini.", "error");
+        ktpInput.focus();
+        return;
+      }
+      showLoader();
+      // 1. Buat Booking
+      const resBook = await apiCall('/transaksi/booking', 'POST', formData, true);
+      hideLoader();
+      
+      if (resBook && resBook.status === 201) {
+        const id_transaksi = resBook.data.data.id_transaksi;
+        
+        // 2. Minta Token Midtrans
+        showLoader();
+        const resToken = await apiCall('/payment/create-token', 'POST', { id_transaksi });
+        hideLoader();
+        
+        if (resToken && resToken.status === 200) {
+          const snapToken = resToken.data.snap_token;
+          
+          window.snap.pay(snapToken, {
+            onSuccess: function(result){
+              showToast("Pembayaran Berhasil!", "success");
+              setTimeout(() => {
+                window.location.href = authData ? '/dashboard-user.html' : '/';
+              }, 2000);
+            },
+            onPending: function(result){
+              showToast("Menunggu pembayaran...", "warning");
+              setTimeout(() => {
+                window.location.href = authData ? '/dashboard-user.html' : '/';
+              }, 2000);
+            },
+            onError: function(result){
+              showToast("Pembayaran gagal.", "error");
+            },
+            onClose: function(){
+              showToast("Anda menutup popup sebelum membayar.", "warning");
+              // Redirect to user dashboard if logged in so they can see pending transaction
+              if(authData && authData.user.role === 'user') {
+                 setTimeout(() => { window.location.href = '/dashboard-user.html'; }, 1000);
+              }
+            }
+          });
+        } else {
+          showToast(resToken?.data?.message || "Gagal membuat token pembayaran.", "error");
+        }
+      } else {
+        if(resBook?.data?.errors) {
+           showToast(resBook.data.errors[0].msg, "error");
+        } else {
+           showToast(resBook?.data?.message || "Gagal membuat booking.", "error");
+        }
+      }
+    }
+  </script>
+</body>
+</html>
