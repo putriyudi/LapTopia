@@ -6,6 +6,30 @@
   <title>Dashboard User — LaptopRent</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Style khusus Grid Katalog di Dashboard */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .laptop-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .laptop-card:hover { transform: translateY(-5px); }
+    .laptop-card img { width: 100%; height: 140px; object-fit: cover; background: #f1f5f9; }
+    .laptop-info { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
+    .laptop-info h4 { margin: 0; font-size: 1rem; color: #1e293b; }
+    .laptop-price { font-weight: 800; color: #2563eb; margin: 0.5rem 0; font-size: 1.1rem; }
+    .laptop-spec { font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; height: 32px; overflow: hidden; }
+  </style>
 </head>
 <body>
   <div class="dashboard-layout">
@@ -14,19 +38,21 @@
         <a href="/" class="logo">Laptop<span>Rent</span></a>
       </div>
       <nav class="sidebar-nav">
-        <a href="#" class="sidebar-link active" onclick="switchTab('riwayat')">Riwayat Sewa</a>
-        <a href="#" class="sidebar-link" onclick="switchTab('profil')">Profil Saya</a>
-        <a href="/" class="sidebar-link">Kembali ke Beranda</a>
-        <a href="#" class="sidebar-link" onclick="logout()" style="color: #fca5a5; margin-top: auto;">Logout</a>
-      </nav>
+  <a href="#" class="sidebar-link active" id="nav-riwayat">Riwayat Sewa</a>
+  <a href="#" class="sidebar-link" id="nav-sewa">Sewa Laptop</a>
+  <a href="#" class="sidebar-link" id="nav-profil">Profil Saya</a>
+  <a href="/" class="sidebar-link">Kembali ke Beranda</a>
+  <a href="#" class="sidebar-link" id="nav-logout" style="color: #fca5a5; margin-top: auto;">Logout</a>
+</nav>
     </aside>
+    
     <main class="dashboard-content">
       <div class="dashboard-topbar">
         <h2 style="font-size: 1.25rem;" id="pageTitle">Riwayat Sewa</h2>
         <div style="font-size: 0.9rem;" id="userGreeting">Loading...</div>
       </div>
+      
       <div class="dashboard-main">
-        
         <!-- Tab Riwayat Sewa -->
         <div id="tab-riwayat">
           <div class="card">
@@ -55,6 +81,21 @@
             </div>
           </div>
         </div>
+
+        <!-- Tab Sewa Laptop (Katalog) -->
+        <div id="tab-sewa" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <h3 style="font-size: 1.1rem;">Pilih Unit Tersedia</h3>
+            </div>
+            <div class="card-body">
+              <div id="catalogGrid" class="catalog-grid">
+                <p class="text-center">Memuat katalog...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tab Profil -->
         <div id="tab-profil" style="display: none;">
           <div class="card" style="max-width: 600px;">

@@ -101,33 +101,35 @@
     </div>
   </nav>
   <main class="container katalog-layout">
-    <aside class="filter-sidebar">
-      <h3 class="mb-3">Filter</h3>
-      
-      <div class="filter-section">
+    <!-- Bagian Sidebar Filter yang Diperbarui -->
+<aside class="filter-sidebar">
+    <h3 class="mb-3">Filter</h3>
+    
+    <div class="filter-section">
         <div class="filter-title">Pencarian</div>
         <input type="text" id="search" class="form-control" placeholder="Cari merk, spek...">
-      </div>
-      
-      <div class="filter-section">
+    </div>
+    
+    <div class="filter-section">
         <div class="filter-title">Merk</div>
         <select id="merk" class="form-control">
-          <option value="">Semua Merk</option>
-          <!-- Diisi JS -->
+            <option value="">Semua Merk</option>
         </select>
-      </div>
-      <div class="filter-section">
+    </div>
+
+    <div class="filter-section">
         <div class="filter-title">Status</div>
         <select id="status" class="form-control">
-          <option value="">Semua Status</option>
-          <option value="Tersedia">Tersedia</option>
-          <option value="Disewa">Disewa</option>
-          <option value="Maintenance">Maintenance</option>
+            <option value="">Semua Status</option>
+            <option value="Tersedia">Tersedia</option>
+            <option value="Disewa">Disewa</option>
+            <option value="Maintenance">Maintenance</option>
         </select>
-      </div>
-      
-      <button class="btn btn-primary" style="width:100%" onclick="loadKatalog(1)">Terapkan Filter</button>
-    </aside>
+    </div>
+    
+    <!-- Hapus onclick="loadKatalog(1)", ditangani addEventListener di JS -->
+    <button class="btn btn-primary" style="width:100%">Terapkan Filter</button>
+</aside>
     <section>
       <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="font-size: 1.8rem;">Katalog Laptop</h2>

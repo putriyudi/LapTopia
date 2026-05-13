@@ -41,13 +41,8 @@
       color: white;
     }
     @media (max-width: 768px) {
-      .checkout-layout {
-        grid-template-columns: 1fr;
-      }
-      .summary-card {
-        position: static;
-        order: -1;
-      }
+      .checkout-layout { grid-template-columns: 1fr; }
+      .summary-card { position: static; order: -1; }
     }
   </style>
 </head>
@@ -56,17 +51,19 @@
     <div class="container">
       <a href="/" class="logo">Laptop<span>Rent</span></a>
       <div class="nav-links">
-        <a href="/katalog.html">Katalog</a>
+        <a href="/dashboard-user.html">Dashboard</a>
         <div id="auth-nav" style="display: flex; align-items: center;"></div>
       </div>
     </div>
   </nav>
+
   <main class="container checkout-layout">
     <div>
       <div class="mb-4">
         <h2 style="font-size: 1.8rem;">Checkout Sewa</h2>
         <p class="text-muted" id="authStatusText">Isi form di bawah ini untuk melanjutkan penyewaan.</p>
       </div>
+
       <form id="checkoutForm" class="card" enctype="multipart/form-data">
         <div class="card-header">
           <h3 style="font-size: 1.1rem;">Data Penyewa</h3>
@@ -92,17 +89,19 @@
               <input type="email" id="email_penyewa" name="email_penyewa" class="form-control" required>
             </div>
           </div>
+
           <div class="form-group mt-1">
             <label class="form-label">Alamat Pengiriman / Domisili</label>
             <input type="text" id="alamat_penyewa" name="alamat_penyewa" class="form-control" required>
           </div>
           
-          <!-- Hanya muncul jika guest -->
+          <!-- Section KTP: Disembunyikan via JS jika sudah login -->
           <div id="guestKtpSection" class="form-group mt-3" style="background: rgba(37,99,235,0.05); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px dashed var(--accent-color);">
             <label class="form-label" style="color: var(--primary-color);">Upload Foto KTP Asli (Sebagai Jaminan)</label>
             <input type="file" id="jaminan_ktp" name="jaminan_ktp" class="form-control" accept="image/jpeg, image/png, image/jpg" style="background: white; margin-bottom: 0.5rem;">
-            <p style="font-size: 0.8rem; color: var(--text-muted);"><strong style="color:var(--primary-color);">🔒 Keamanan Terjamin:</strong> Data KTP Anda dilindungi sistem dan tidak dapat diakses publik.</p>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">🔒 Data Anda aman dan terenkripsi.</p>
           </div>
+
           <h3 style="font-size: 1.1rem; margin: 2rem 0 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Detail Sewa</h3>
           <div class="grid grid-cols-2">
             <div class="form-group">
@@ -111,12 +110,13 @@
             </div>
             <div class="form-group">
               <label class="form-label">Durasi (Hari)</label>
-              <input type="number" id="durasi_hari" name="durasi_hari" class="form-control" required min="1" max="90" value="1" onchange="calcTotal()">
+              <input type="number" id="durasi_hari" name="durasi_hari" class="form-control" required min="1" max="90" value="1" oninput="calcTotal()">
             </div>
           </div>
         </div>
       </form>
     </div>
+
     <div>
       <div class="card summary-card">
         <div class="card-header">
@@ -125,7 +125,7 @@
         <div class="card-body">
           <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center;">
             <div style="background: rgba(255,255,255,0.1); width: 50px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              <svg fill="none" stroke="white" viewBox="0 0 24 24" style="width: 24px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
             </div>
             <div>
               <div style="font-weight: 600; font-size: 1.1rem;" id="sum_merk">Memuat...</div>
@@ -134,7 +134,7 @@
           </div>
           
           <div class="summary-row">
-            <span>Harga Sewa per Hari</span>
+            <span>Harga Sewa / Hari</span>
             <span id="sum_price_per_day">Rp 0</span>
           </div>
           <div class="summary-row">
@@ -147,18 +147,14 @@
             <span id="sum_total_price">Rp 0</span>
           </div>
           
-          <button class="btn btn-primary mt-4" style="width: 100%; padding: 1rem; background: var(--success); border-color: var(--success); font-size: 1rem;" onclick="submitCheckout()">
+          <button class="btn btn-primary mt-4" style="width: 100%; padding: 1rem; background: var(--success); border: none;" onclick="submitCheckout()">
             Lanjut Pembayaran
           </button>
-          
-          <div style="text-align: center; margin-top: 1rem; font-size: 0.8rem; color: #94a3b8;">
-            Pembayaran diproses secara aman oleh <strong>Midtrans</strong>
-          </div>
         </div>
       </div>
     </div>
   </main>
-  <!-- Midtrans Snap.js -->
+
   <script id="midtransScript"></script>
   <script src="/js/api.js"></script>
   <script src="/js/checkout.js"></script>

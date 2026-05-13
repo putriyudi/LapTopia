@@ -1,16 +1,19 @@
 /* frontend/js/api.js */
-const BASE_URL = '/api'; // Karena serve statis dari server yang sama
+const BASE_URL = '/api'; 
 let currentUser = null;
-// Helper: Tampilkan/Sembunyikan Loader
+
+// --- Helper UI Functions ---
+
 function showLoader() {
   const loader = document.getElementById('global-loader');
   if (loader) loader.classList.add('active');
 }
+
 function hideLoader() {
   const loader = document.getElementById('global-loader');
   if (loader) loader.classList.remove('active');
 }
-// Helper: Toast Notification
+
 function showToast(message, type = 'info') {
   let container = document.querySelector('.toast-container');
   if (!container) {
@@ -34,7 +37,9 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 300);
   }, 4000);
 }
-// Core API Call Function
+
+// --- Core API Call Function ---
+
 async function apiCall(endpoint, method = 'GET', body = null, isFormData = false) {
   const token = localStorage.getItem('token');
   const headers = {};
@@ -55,11 +60,12 @@ async function apiCall(endpoint, method = 'GET', body = null, isFormData = false
   try {
     const response = await fetch(`${BASE_URL}${endpoint}`, options);
     
-    // Auto logout if unauthorized (token expired/invalid)
+    // Auto logout jika token expired (401)
     if (response.status === 401 && !endpoint.includes('/login')) {
-      logout();
+      window.logout();
       return null;
     }
+
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") !== -1) {
        const data = await response.json();
@@ -76,27 +82,42 @@ async function apiCall(endpoint, method = 'GET', body = null, isFormData = false
     return { status: 500, data: { success: false, message: 'Network error' } };
   }
 }
-// Auth Functions
+
+// --- Auth Functions ---
+
 function setAuth(token, user) {
   localStorage.setItem('token', token);
   localStorage.setItem('user', JSON.stringify(user));
   currentUser = user;
 }
-function logout() {
+
+/**
+ * Logout Global: Menghapus sesi dan membersihkan storage
+ */
+window.logout = function() {
+  console.log("Menjalankan proses logout...");
   localStorage.removeItem('token');
   localStorage.removeItem('user');
   currentUser = null;
+  
+  // Arahkan ke beranda
   window.location.href = '/index.html';
-}
+};
+
 function getAuth() {
   const token = localStorage.getItem('token');
   const userStr = localStorage.getItem('user');
   if (token && userStr) {
-    currentUser = JSON.parse(userStr);
-    return { token, user: currentUser };
+    try {
+      currentUser = JSON.parse(userStr);
+      return { token, user: currentUser };
+    } catch (e) {
+      return null;
+    }
   }
   return null;
 }
+
 // Middleware: Route Guards
 function requireAuth(allowedRoles = []) {
   const auth = getAuth();
@@ -106,7 +127,6 @@ function requireAuth(allowedRoles = []) {
   }
   
   if (allowedRoles.length > 0 && !allowedRoles.includes(auth.user.role)) {
-    // Redirect based on role
     if (auth.user.role === 'admin') window.location.href = '/dashboard-admin.html';
     else if (auth.user.role === 'kasir') window.location.href = '/dashboard-kasir.html';
     else window.location.href = '/dashboard-user.html';
@@ -114,6 +134,7 @@ function requireAuth(allowedRoles = []) {
   }
   return auth.user;
 }
+
 function redirectIfAuthenticated() {
   const auth = getAuth();
   if (auth) {
@@ -122,25 +143,25 @@ function redirectIfAuthenticated() {
     else window.location.href = '/dashboard-user.html';
   }
 }
-// Format Rupiah
+
+// --- Utils ---
+
 function formatRupiah(number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
 }
-// Format Date
+
 function formatDate(dateString) {
   if (!dateString) return '-';
   const d = new Date(dateString);
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
-function formatJustDate(dateString) {
-    if (!dateString) return '-';
-    const d = new Date(dateString);
-    return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric'});
-}
-// Initial setup on load
+
+// --- Initial Setup & Navbar Auth ---
+
 document.addEventListener('DOMContentLoaded', () => {
   getAuth();
-  // Insert global loader if not exists
+  
+  // Buat loader global jika belum ada
   if (!document.getElementById('global-loader')) {
     const loader = document.createElement('div');
     loader.id = 'global-loader';
@@ -148,28 +169,58 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(loader);
   }
   
-  // Setup Navbar dynamic based on auth
-  updateNavbarAuth();
+  // Update tampilan navbar (Login/Logout)
+  window.updateNavbarAuth();
 });
-function updateNavbarAuth() {
+
+/**
+ * Memperbarui tampilan navbar secara dinamis berdasarkan status login.
+ * Menggunakan Event Listener untuk mencegah error CSP (Content Security Policy).
+ */
+window.updateNavbarAuth = function() {
   const authNav = document.getElementById('auth-nav');
   if (!authNav) return;
   
   const auth = getAuth();
+  authNav.innerHTML = ''; // Bersihkan navbar
+
   if (auth) {
     let dashboardLink = '/dashboard-user.html';
     if(auth.user.role === 'admin') dashboardLink = '/dashboard-admin.html';
     if(auth.user.role === 'kasir') dashboardLink = '/dashboard-kasir.html';
     
-    authNav.innerHTML = `
-      <span style="font-size: 0.9rem; margin-right: 1rem; color: var(--secondary-color);">Hi, <strong>${auth.user.nama_lengkap}</strong></span>
-      <a href="${dashboardLink}" class="btn btn-outline" style="margin-right: 0.5rem;">Dashboard</a>
-      <button onclick="logout()" class="btn btn-primary">Logout</button>
-    `;
+    // Nama User
+    const span = document.createElement('span');
+    span.style.cssText = "font-size: 0.9rem; margin-right: 1rem; color: #475569;";
+    span.innerHTML = `Hi, <strong>${auth.user.nama_lengkap}</strong>`;
+    
+    // Link Dashboard
+    const aDash = document.createElement('a');
+    aDash.href = dashboardLink;
+    aDash.className = "btn btn-outline";
+    aDash.style.marginRight = "0.5rem";
+    aDash.innerText = "Dashboard";
+
+    // Tombol Logout
+    const btnLogout = document.createElement('button');
+    btnLogout.className = "btn btn-primary";
+    btnLogout.innerText = "Logout";
+    // Pasang listener manual agar tidak diblokir browser
+    btnLogout.addEventListener('click', () => {
+        if(confirm('Apakah Anda yakin ingin keluar?')) {
+            window.logout();
+        }
+    });
+
+    authNav.appendChild(span);
+    authNav.appendChild(aDash);
+    authNav.appendChild(btnLogout);
+
   } else {
+    // Tampilan jika belum login
     authNav.innerHTML = `
       <a href="/login.html" style="margin-right: 1.5rem; font-weight: 500;">Login</a>
       <a href="/register.html" class="btn btn-primary">Daftar</a>
     `;
   }
-}
+};
