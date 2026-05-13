@@ -14,12 +14,12 @@
         <a href="/" class="logo" style="font-size: 1.2rem;">Laptop<span>Rent</span> Admin</a>
       </div>
       <nav class="sidebar-nav">
-        <a href="#" class="sidebar-link active" onclick="switchTab('stats')">Statistik</a>
-        <a href="#" class="sidebar-link" onclick="switchTab('laptops')">Kelola Laptop</a>
-        <a href="#" class="sidebar-link" onclick="switchTab('users')">Kelola User</a>
-        <a href="#" class="sidebar-link" onclick="switchTab('laporan')">Laporan Transaksi</a>
+        <a href="#" class="sidebar-link active">Statistik</a>
+        <a href="#" class="sidebar-link">Kelola Laptop</a>
+        <a href="#" class="sidebar-link">Kelola User</a>
+        <a href="#" class="sidebar-link">Laporan Transaksi</a>
         <a href="/" class="sidebar-link" target="_blank">Lihat Website</a>
-        <a href="#" class="sidebar-link" onclick="logout()" style="color: #fca5a5; margin-top: auto;">Logout</a>
+        <a href="#" class="sidebar-link" style="color: #fca5a5; margin-top: auto;" onclick="logout();return false;">Logout</a>
       </nav>
     </aside>
     <main class="dashboard-content">
@@ -43,7 +43,7 @@
           <div class="card">
             <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
               <h3 style="font-size: 1.1rem;">Daftar Laptop</h3>
-              <button class="btn btn-primary" onclick="alert('Fitur tambah laptop via API /api/laptops (POST) siap diintegrasikan!')">+ Tambah Laptop</button>
+              <button class="btn btn-primary" id="btnTambahLaptop">+ Tambah Laptop</button>
             </div>
             <div class="card-body p-0">
               <div class="table-responsive">
@@ -87,79 +87,6 @@
     </main>
   </div>
   <script src="/js/api.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const auth = requireAuth(['admin']);
-      if (!auth) return;
-      document.getElementById('adminName').innerText = `Admin: ${auth.nama_lengkap}`;
-      loadStats();
-    });
-    function switchTab(tabId) {
-      document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById(`tab-${tabId}`).style.display = 'block';
-      
-      const titles = {
-        'stats': 'Statistik Dashboard',
-        'laptops': 'Manajemen Laptop',
-        'users': 'Manajemen Pengguna',
-        'laporan': 'Laporan Keseluruhan Transaksi'
-      };
-      document.getElementById('pageTitle').innerText = titles[tabId];
-      if(tabId === 'stats') loadStats();
-      if(tabId === 'laptops') loadLaptops();
-      if(tabId === 'users') loadUsers();
-      if(tabId === 'laporan') loadLaporan();
-    }
-    async function loadStats() {
-      showLoader();
-      const res = await apiCall('/admin/stats');
-      hideLoader();
-      if (res && res.status === 200) {
-        const d = res.data.data;
-        document.getElementById('st_pendapatan').innerText = formatRupiah(d.trxStats.total_pendapatan || 0);
-        document.getElementById('st_trx_aktif').innerText = d.trxStats.aktif || 0;
-        document.getElementById('st_lap_sewa').innerText = d.laptopStats.disewa || 0;
-        document.getElementById('st_users').innerText = d.userStats.total || 0;
-      }
-    }
-    async function loadLaptops() {
-      showLoader();
-      const res = await apiCall('/laptops?limit=50');
-      hideLoader();
-      const tb = document.getElementById('lapTable');
-      tb.innerHTML = '';
-      if(res && res.status === 200) {
-        res.data.data.forEach(l => {
-          tb.innerHTML += `<tr><td>${l.nomor_seri}</td><td>${l.merk_tipe}</td><td>${formatRupiah(l.harga_sewa_per_hari)}</td><td>${l.status}</td></tr>`;
-        });
-      }
-    }
-    async function loadUsers() {
-      showLoader();
-      const res = await apiCall('/admin/users');
-      hideLoader();
-      const tb = document.getElementById('usrTable');
-      tb.innerHTML = '';
-      if(res && res.status === 200) {
-        res.data.data.forEach(u => {
-          tb.innerHTML += `<tr><td>${u.id_user}</td><td>${u.nama_lengkap}</td><td>${u.email}</td><td><span class="badge badge-secondary">${u.role}</span></td><td>${formatJustDate(u.created_at)}</td></tr>`;
-        });
-      }
-    }
-    async function loadLaporan() {
-      showLoader();
-      const res = await apiCall('/admin/transaksi');
-      hideLoader();
-      const tb = document.getElementById('lapTrxTable');
-      tb.innerHTML = '';
-      if(res && res.status === 200) {
-        res.data.data.forEach(t => {
-          tb.innerHTML += `<tr><td>#${t.id_transaksi}</td><td>${t.nama_penyewa}</td><td>${t.merk_tipe}</td><td>${formatRupiah(t.total_biaya)}</td><td>${t.status_transaksi}</td><td>${formatJustDate(t.created_at)}</td></tr>`;
-        });
-      }
-    }
-  </script>
+  <script src="/js/dashboard-admin.js"></script>
 </body>
 </html>

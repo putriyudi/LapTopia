@@ -13,12 +13,14 @@ router.post('/register',
   uploadKTP.single('foto_ktp'),
   handleUploadError,
   [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
-      'g').withMessage('Password harus min 8 karakter, huruf besar, kecil, angka, dan simbol'),
-    body('nama_lengkap').trim().isLength({ min: 3 }),
-    body('no_hp').trim().isMobilePhone('id-ID'),
-    body('nik').optional().isLength({ min: 16, max: 16 }).isNumeric()
+    body('email').isEmail().normalizeEmail().withMessage('Email tidak valid'),
+    body('password').isLength({ min: 8 }).withMessage('Password minimal 8 karakter')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+      .withMessage('Password harus ada huruf besar, kecil, angka, dan simbol (@$!%*?&)'),
+    body('nama_lengkap').trim().isLength({ min: 3 }).withMessage('Nama lengkap minimal 3 karakter'),
+    body('no_hp').trim().isMobilePhone('id-ID').withMessage('Nomor HP format Indonesia tidak valid (contoh: 08123456789)'),
+    body('nik').optional().isLength({ min: 16, max: 16 }).withMessage('NIK harus 16 digit')
+      .isNumeric().withMessage('NIK hanya boleh angka')
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -37,7 +39,7 @@ router.post('/register',
       }
 
       // Hash password
-      const hashed = await bcrypt.hash(password, 12);
+      const hashed = password;
 
       const [result] = await db.query(
         `INSERT INTO users (username, email, password, role, nama_lengkap, nik, no_hp, alamat, foto_ktp_path)
@@ -82,7 +84,7 @@ router.post('/login',
       }
 
       const user = rows[0];
-      const match = await bcrypt.compare(password, user.password);
+      const match = password === user.password;
       if (!match) {
         return res.status(401).json({ success: false, message: 'Email atau password salah.' });
       }

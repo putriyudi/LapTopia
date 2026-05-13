@@ -62,35 +62,6 @@
     </div>
   </div>
   <script src="/js/api.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      redirectIfAuthenticated();
-      
-      document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const form = document.getElementById('registerForm');
-        const formData = new FormData(form);
-        
-        showLoader();
-        const res = await apiCall('/auth/register', 'POST', formData, true);
-        hideLoader();
-        
-        if (res.status === 201) {
-          showToast('Registrasi berhasil! Silakan login.', 'success');
-          setTimeout(() => {
-            window.location.href = '/login.html';
-          }, 2000);
-        } else {
-          if (res.data.errors) {
-            // Validasi error dari express-validator
-            showToast(res.data.errors[0].msg, 'error');
-          } else {
-            showToast(res.data.message || 'Gagal registrasi.', 'error');
-          }
-        }
-      });
-    });
-  </script>
+  <script src="/js/register.js"></script>
 </body>
 </html>

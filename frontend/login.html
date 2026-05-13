@@ -36,34 +36,6 @@
     </div>
   </div>
   <script src="/js/api.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      redirectIfAuthenticated();
-      
-      document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        showLoader();
-        const res = await apiCall('/auth/login', 'POST', { email, password });
-        hideLoader();
-        
-        if (res.status === 200) {
-          setAuth(res.data.token, res.data.user);
-          showToast('Login berhasil!', 'success');
-          
-          setTimeout(() => {
-            if (res.data.user.role === 'admin') window.location.href = '/dashboard-admin.html';
-            else if (res.data.user.role === 'kasir') window.location.href = '/dashboard-kasir.html';
-            else window.location.href = '/dashboard-user.html';
-          }, 1000);
-        } else {
-          showToast(res.data.message || 'Email atau password salah.', 'error');
-        }
-      });
-    });
-  </script>
+  <script src="/js/login.js"></script>
 </body>
 </html>
