@@ -48,7 +48,7 @@
                     <th>Penyewa</th>
                     <th>Laptop</th>
                     <th>Tgl Rencana Kembali</th>
-                    <th>Status</th>
+                    <th>Status & Pembayaran</th>
                     <th>Aksi POS</th>
                   </tr>
                 </thead>
@@ -82,8 +82,21 @@
             <option value="Lainnya">Lainnya</option>
           </select>
         </div>
+        <div class="form-group mt-3">
+          <label class="form-label">Unit Pengganti (Kosongkan jika sama)</label>
+          <select id="st_id_laptop_aktual" class="form-control">
+            <option value="">-- Gunakan Unit Booking Awal --</option>
+          </select>
+        </div>
         <button class="btn btn-primary" style="width:100%" onclick="submitSerahTerima()">Konfirmasi & Generate Kontrak</button>
       </div>
+    </div>
+  </div>
+  <!-- Modal KTP -->
+  <div id="modalKTP" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 80%; max-width: 600px; position:relative; background: transparent; box-shadow: none;">
+      <button class="btn btn-outline" style="position:absolute; top:-40px; right:0; color:white; border-color:white;" onclick="closeModal('modalKTP')">Tutup ✕</button>
+      <img id="ktpImage" src="" style="width: 100%; border-radius: 8px; object-fit: contain;">
     </div>
   </div>
   <!-- Modal Pengembalian -->

@@ -106,6 +106,14 @@ router.post('/serah-terima/:id_transaksi', verifyToken, isKasir, async (req, res
       [final_id_laptop]
     );
 
+    // Jika unit diganti, rilis laptop lama kembali ke Tersedia
+    if (final_id_laptop != trx.id_laptop) {
+      await conn.query(
+        `UPDATE laptops SET status = 'Tersedia' WHERE id_laptop = ?`,
+        [trx.id_laptop]
+      );
+    }
+
     await conn.commit();
 
     // Generate kontrak PDF
@@ -222,6 +230,20 @@ router.post('/pengembalian/:id_transaksi', verifyToken, isKasir, async (req, res
     res.status(500).json({ success: false, message: 'Server error.' });
   } finally {
     conn.release();
+  }
+});
+
+// ── LIHAT KTP (Protected Blob URL) ────────────────────────
+router.get('/ktp/:id_transaksi', verifyToken, isKasir, async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT jaminan_file_path FROM transaksi WHERE id_transaksi = ?', [req.params.id_transaksi]);
+    if (!rows.length || !rows[0].jaminan_file_path) {
+      return res.status(404).json({ success: false, message: 'KTP tidak ditemukan.' });
+    }
+    const filePath = path.join(__dirname, '../../', rows[0].jaminan_file_path);
+    res.sendFile(filePath);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
 

@@ -27,18 +27,25 @@ async function loadBookings() {
       else if(trx.status_transaksi === 'Booking') statusBadge = `<span class="badge badge-warning">Booking</span>`;
       else if(trx.status_transaksi === 'Selesai') statusBadge = `<span class="badge badge-success">Selesai</span>`;
       
-      let actionBtns = '';
+      let paymentBadge = '';
+      if(trx.payment_status === 'paid') paymentBadge = `<span class="badge badge-success mt-1" style="display:inline-block; font-size:0.75rem;">Lunas (${trx.payment_method || '-'})</span>`;
+      else paymentBadge = `<span class="badge badge-warning mt-1" style="display:inline-block; font-size:0.75rem;">Pending (${trx.payment_method || '-'})</span>`;
       
-      if (trx.status_transaksi === 'Booking' && trx.payment_status === 'paid') {
-        actionBtns = `<button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="openSerahTerima(${trx.id_transaksi})">Serah Terima</button>`;
+      let actionBtns = `<button class="btn btn-outline mb-1" style="padding:0.3rem 0.6rem; font-size:0.75rem; border-color:var(--border-color); color:var(--text-color);" onclick="lihatKTP(${trx.id_transaksi})">Preview KTP</button><br>`;
+      
+      if (trx.status_transaksi === 'Booking') {
+        if (trx.payment_status !== 'paid') {
+          actionBtns += `<button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-top:0.3rem;" onclick="konfirmasiBayar(${trx.id_transaksi})">Konfirmasi Bayar</button>`;
+        } else {
+          actionBtns += `<button class="btn btn-primary" style="padding:0.4rem 0.8rem; font-size:0.8rem; background:var(--success); border-color:var(--success); margin-top:0.3rem;" onclick="openSerahTerima(${trx.id_transaksi})">Serah Terima</button>`;
+        }
       } else if (trx.status_transaksi === 'Aktif' || trx.status_transaksi === 'Terlambat') {
-        actionBtns = `<button class="btn btn-success" style="padding:0.4rem 0.8rem; font-size:0.8rem; background:var(--success); border-color:var(--success); color:white;" onclick="openPengembalian(${trx.id_transaksi})">Kembalikan</button>
-                      <a href="/api/kasir/kontrak/${trx.id_transaksi}" class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-left:0.5rem;" target="_blank">Unduh Kontrak</a>`;
+        actionBtns += `<button class="btn btn-success" style="padding:0.4rem 0.8rem; font-size:0.8rem; background:var(--success); border-color:var(--success); color:white; margin-top:0.3rem;" onclick="openPengembalian(${trx.id_transaksi})">Kembalikan</button>
+                       <button class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-left:0.5rem; margin-top:0.3rem;" onclick="lihatKontrak(${trx.id_transaksi})">Unduh Kontrak</button>`;
       } else if (trx.status_transaksi === 'Selesai') {
-        actionBtns = `<a href="/api/kasir/kontrak/${trx.id_transaksi}" class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem;" target="_blank">Lihat Kontrak</a>`;
-      } else if (trx.status_transaksi === 'Booking' && trx.payment_status !== 'paid') {
-         actionBtns = `<span class="text-muted" style="font-size:0.8rem;">Menunggu Pembayaran</span>`;
+        actionBtns += `<button class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-top:0.3rem;" onclick="lihatKontrak(${trx.id_transaksi})">Lihat Kontrak</button>`;
       }
+      
       tbody.innerHTML += `
         <tr>
           <td>#${trx.id_transaksi}</td>
@@ -51,7 +58,7 @@ async function loadBookings() {
             <div style="font-size:0.8rem; color:var(--text-muted)">SN: ${trx.nomor_seri}</div>
           </td>
           <td>${formatJustDate(trx.tgl_kembali_rencana)}</td>
-          <td>${statusBadge}</td>
+          <td>${statusBadge}<br>${paymentBadge}</td>
           <td>${actionBtns}</td>
         </tr>
       `;
@@ -59,21 +66,81 @@ async function loadBookings() {
   }
 }
 
-function openSerahTerima(id) {
+async function konfirmasiBayar(id) {
+  if(!confirm('Yakin ingin mengonfirmasi pembayaran transaksi ini?')) return;
+  showLoader();
+  const res = await apiCall(`/kasir/konfirmasi-pembayaran/${id}`, 'POST');
+  hideLoader();
+  if(res && res.status === 200) {
+    showToast("Pembayaran dikonfirmasi.", "success");
+    loadBookings();
+  } else {
+    showToast(res.data.message || "Gagal konfirmasi.", "error");
+  }
+}
+
+async function lihatKTP(id) {
+  showLoader();
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/kasir/ktp/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    hideLoader();
+    if (response.ok) {
+      const blob = await response.blob();
+      document.getElementById('ktpImage').src = URL.createObjectURL(blob);
+      document.getElementById('modalKTP').style.display = 'flex';
+    } else {
+      showToast("KTP tidak ditemukan atau akses ditolak.", "error");
+    }
+  } catch (e) {
+    hideLoader();
+    showToast("Error mengambil KTP.", "error");
+  }
+}
+
+function lihatKontrak(id) {
+  const token = localStorage.getItem('token');
+  fetch(`/api/kasir/kontrak/${id}`, { headers: { 'Authorization': `Bearer ${token}` } })
+    .then(async res => {
+      if(res.ok) {
+        const blob = await res.blob();
+        window.open(URL.createObjectURL(blob), '_blank');
+      } else {
+        showToast("Kontrak belum tersedia.", "warning");
+      }
+    });
+}
+
+async function openSerahTerima(id) {
   document.getElementById('st_id_transaksi').value = id;
   document.getElementById('st_jaminan_fisik').value = '';
   document.getElementById('modalSerahTerima').style.display = 'flex';
+  
+  const select = document.getElementById('st_id_laptop_aktual');
+  select.innerHTML = '<option value="">-- Gunakan Unit Booking Awal --</option>';
+  const res = await apiCall('/laptops?status=Tersedia&limit=100');
+  if (res && res.status === 200) {
+    res.data.data.forEach(l => {
+      select.innerHTML += `<option value="${l.id_laptop}">${l.merk_tipe} (SN: ${l.nomor_seri})</option>`;
+    });
+  }
 }
 
 async function submitSerahTerima() {
   const id = document.getElementById('st_id_transaksi').value;
   const jaminan = document.getElementById('st_jaminan_fisik').value;
+  const idAktual = document.getElementById('st_id_laptop_aktual').value;
   if(!jaminan) {
     showToast("Pilih jenis jaminan fisik", "warning");
     return;
   }
   showLoader();
-  const res = await apiCall(`/kasir/serah-terima/${id}`, 'POST', { jaminan_fisik: jaminan });
+  const payload = { jaminan_fisik: jaminan };
+  if(idAktual) payload.id_laptop_aktual = idAktual;
+  
+  const res = await apiCall(`/kasir/serah-terima/${id}`, 'POST', payload);
   hideLoader();
   if(res && res.status === 200) {
     showToast("Serah terima berhasil. Kontrak digenerate.", "success");
