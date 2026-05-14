@@ -4,88 +4,71 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Katalog — LaptopRent</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <style>
+    .katalog-hero {
+      padding: 2.8rem 0 0.4rem;
+    }
+    .katalog-hero-card {
+      background:
+        radial-gradient(circle at 85% 10%, rgba(37, 99, 235, 0.22), transparent 20rem),
+        linear-gradient(135deg, #0f172a, #1e293b 62%, #172554);
+      border-radius: 30px;
+      padding: 2rem;
+      color: white;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+    }
+    .katalog-hero-card h1 {
+      color: white;
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 0.7rem;
+    }
+    .katalog-hero-card p {
+      color: #cbd5e1;
+      max-width: 660px;
+      line-height: 1.75;
+    }
     .katalog-layout {
       display: grid;
-      grid-template-columns: 260px 1fr;
+      grid-template-columns: 280px 1fr;
       gap: 2rem;
-      padding: 3rem 0;
+      padding: 2.5rem 0 4rem;
+      align-items: start;
     }
     .filter-sidebar {
-      background: white;
-      padding: 1.5rem;
-      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.92);
+      padding: 1.4rem;
+      border-radius: var(--radius-lg);
       border: 1px solid var(--border-color);
       height: max-content;
       position: sticky;
       top: 100px;
+      backdrop-filter: blur(12px);
     }
-    .filter-section {
-      margin-bottom: 1.5rem;
-    }
+    .filter-section { margin-bottom: 1.25rem; }
     .filter-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--secondary-color);
-      margin-bottom: 0.8rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 0.62rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.08em;
     }
-    
-    .laptop-card {
+    .catalog-toolbar {
       display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    .laptop-image-placeholder {
-      background: rgba(37,99,235,0.05);
-      height: 160px;
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      border-bottom: 1px solid var(--border-color);
-      color: var(--accent-color);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
     }
-    .laptop-content {
-      padding: 1.2rem;
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .laptop-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 0.4rem;
-    }
-    .laptop-spec {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      flex-grow: 1;
-    }
-    .laptop-price {
-      font-family: 'Outfit', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--primary-color);
-      margin-bottom: 1rem;
-    }
-    .laptop-price span {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-weight: 400;
-      font-family: 'Inter', sans-serif;
-    }
-    
-    @media (max-width: 768px) {
-      .katalog-layout {
-        grid-template-columns: 1fr;
-      }
-      .filter-sidebar {
-        position: static;
-      }
+    .catalog-toolbar h2 { font-size: 1.8rem; }
+    @media (max-width: 900px) {
+      .katalog-layout { grid-template-columns: 1fr; }
+      .filter-sidebar { position: static; }
+      .catalog-toolbar { align-items: flex-start; flex-direction: column; }
     }
   </style>
 </head>
@@ -94,53 +77,63 @@
     <div class="container">
       <a href="/" class="logo">Laptop<span>Rent</span></a>
       <div class="nav-links">
-        <a href="/katalog.html" style="color: var(--accent-color);">Katalog</a>
+        <a href="/katalog.html" style="color: var(--accent-color); background: var(--accent-soft);">Katalog</a>
         <a href="/#cara-sewa">Cara Sewa</a>
-        <div id="auth-nav" style="display: flex; align-items: center;"></div>
+        <div id="auth-nav" style="display: flex; align-items: center; gap: .5rem;"></div>
       </div>
     </div>
   </nav>
-  <main class="container katalog-layout">
-    <!-- Bagian Sidebar Filter yang Diperbarui -->
-<aside class="filter-sidebar">
-    <h3 class="mb-3">Filter</h3>
-    
-    <div class="filter-section">
-        <div class="filter-title">Pencarian</div>
-        <input type="text" id="search" class="form-control" placeholder="Cari merk, spek...">
+
+  <header class="container katalog-hero">
+    <div class="katalog-hero-card">
+      <h1>Katalog Laptop Siap Sewa</h1>
+      <p>Pilih laptop berdasarkan kebutuhan, status ketersediaan, dan spesifikasi. Gunakan filter agar proses pencarian unit lebih cepat dan rapi.</p>
     </div>
-    
-    <div class="filter-section">
+  </header>
+
+  <main class="container katalog-layout">
+    <aside class="filter-sidebar">
+      <h3 class="mb-3">Filter Unit</h3>
+
+      <div class="filter-section">
+        <div class="filter-title">Pencarian</div>
+        <input type="text" id="search" class="form-control" placeholder="Cari merk, tipe, spek...">
+      </div>
+
+      <div class="filter-section">
         <div class="filter-title">Merk</div>
         <select id="merk" class="form-control">
-            <option value="">Semua Merk</option>
+          <option value="">Semua Merk</option>
         </select>
-    </div>
+      </div>
 
-    <div class="filter-section">
+      <div class="filter-section">
         <div class="filter-title">Status</div>
         <select id="status" class="form-control">
-            <option value="">Semua Status</option>
-            <option value="Tersedia">Tersedia</option>
-            <option value="Disewa">Disewa</option>
-            <option value="Maintenance">Maintenance</option>
+          <option value="">Semua Status</option>
+          <option value="Tersedia">Tersedia</option>
+          <option value="Disewa">Disewa</option>
+          <option value="Maintenance">Maintenance</option>
         </select>
-    </div>
-    
-    <!-- Hapus onclick="loadKatalog(1)", ditangani addEventListener di JS -->
-    <button class="btn btn-primary" style="width:100%">Terapkan Filter</button>
-</aside>
-    <section>
-      <div class="mb-3" style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="font-size: 1.8rem;">Katalog Laptop</h2>
-        <span id="totalItems" class="text-muted" style="font-size: 0.9rem;">Memuat...</span>
       </div>
-      
+
+      <button class="btn btn-primary" style="width:100%">Terapkan Filter</button>
+    </aside>
+
+    <section>
+      <div class="catalog-toolbar">
+        <div>
+          <h2>Katalog Laptop</h2>
+          <p class="text-muted" style="font-size: .94rem; margin-top: .25rem;">Temukan unit yang paling sesuai untuk tugas, presentasi, desain, atau operasional.</p>
+        </div>
+        <span id="totalItems" class="badge badge-neutral">Memuat...</span>
+      </div>
+
       <div class="grid grid-cols-3" id="katalogGrid">
         <!-- Diisi JS -->
       </div>
-      
-      <div id="pagination" class="mt-4" style="display: flex; gap: 0.5rem; justify-content: center;">
+
+      <div id="pagination" class="mt-4" style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
         <!-- Diisi JS -->
       </div>
     </section>
