@@ -113,9 +113,17 @@
           <input type="text" id="pg_kondisi" class="form-control" placeholder="Aman / Ada Lecet">
         </div>
         <div class="form-group">
+          <label class="form-label">Status Unit Setelah Kembali</label>
+          <select id="pg_status_unit" class="form-control" required>
+            <option value="Tersedia">Aman (Kembali Tersedia)</option>
+            <option value="Maintenance">Perlu Perbaikan (Maintenance)</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">Denda Tambahan (Kerusakan dll) Rp</label>
           <input type="number" id="pg_denda" class="form-control" value="0" min="0">
         </div>
+        <p class="text-muted" style="font-size:0.8rem; margin-bottom:1rem;">*Denda keterlambatan otomatis dihitung oleh sistem.</p>
         <button class="btn btn-primary" style="width:100%; background:var(--success)" onclick="submitPengembalian()">Konfirmasi Pengembalian</button>
       </div>
     </div>

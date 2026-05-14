@@ -155,10 +155,10 @@ router.post('/serah-terima/:id_transaksi', verifyToken, isKasir, async (req, res
 });
 
 // ── PROSES PENGEMBALIAN ───────────────────────────────────
-// Status: Aktif/Terlambat → Selesai, Laptop: Disewa → Tersedia
+// Status: Aktif/Terlambat → Selesai, Laptop: Disewa → Tersedia / Maintenance
 router.post('/pengembalian/:id_transaksi', verifyToken, isKasir, async (req, res) => {
   const { id_transaksi } = req.params;
-  const { kondisi_catatan, denda_tambahan = 0 } = req.body;
+  const { kondisi_catatan, denda_tambahan = 0, status_unit = 'Tersedia' } = req.body;
 
   const conn = await db.getConnection();
   try {
@@ -184,12 +184,16 @@ router.post('/pengembalian/:id_transaksi', verifyToken, isKasir, async (req, res
 
     const now       = new Date();
     const rencana   = new Date(trx.tgl_kembali_rencana);
-    const terlambat = now > rencana;
+    
+    // Gunakan tanggal tanpa jam agar hitungan terlambat lebih adil
+    const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const rencanaDay = new Date(rencana.getFullYear(), rencana.getMonth(), rencana.getDate());
+    const terlambat = nowDay > rencanaDay;
 
     // Hitung denda otomatis (10% harga per hari × hari terlambat)
     let dendaAuto = 0;
     if (terlambat) {
-      const hariTerlambat = Math.ceil((now - rencana) / (1000 * 60 * 60 * 24));
+      const hariTerlambat = Math.ceil((nowDay - rencanaDay) / (1000 * 60 * 60 * 24));
       const [laptopRows] = await conn.query('SELECT harga_sewa_per_hari FROM laptops WHERE id_laptop = ?', [trx.id_laptop]);
       dendaAuto = hariTerlambat * parseFloat(laptopRows[0].harga_sewa_per_hari) * 0.1;
     }
@@ -205,10 +209,11 @@ router.post('/pengembalian/:id_transaksi', verifyToken, isKasir, async (req, res
       [totalDenda, id_transaksi]
     );
 
-    // Laptop kembali Tersedia
+    // Laptop kembali Tersedia atau Maintenance
+    const finalStatusUnit = ['Tersedia', 'Maintenance'].includes(status_unit) ? status_unit : 'Tersedia';
     await conn.query(
-      `UPDATE laptops SET status = 'Tersedia' WHERE id_laptop = ?`,
-      [trx.id_laptop]
+      `UPDATE laptops SET status = ? WHERE id_laptop = ?`,
+      [finalStatusUnit, trx.id_laptop]
     );
 
     await conn.commit();

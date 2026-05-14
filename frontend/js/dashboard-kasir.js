@@ -154,6 +154,7 @@ async function submitSerahTerima() {
 function openPengembalian(id) {
   document.getElementById('pg_id_transaksi').value = id;
   document.getElementById('pg_kondisi').value = '';
+  document.getElementById('pg_status_unit').value = 'Tersedia';
   document.getElementById('pg_denda').value = '0';
   document.getElementById('modalPengembalian').style.display = 'flex';
 }
@@ -161,12 +162,17 @@ function openPengembalian(id) {
 async function submitPengembalian() {
   const id = document.getElementById('pg_id_transaksi').value;
   const kondisi = document.getElementById('pg_kondisi').value;
+  const statusUnit = document.getElementById('pg_status_unit').value;
   const denda = document.getElementById('pg_denda').value;
   showLoader();
-  const res = await apiCall(`/kasir/pengembalian/${id}`, 'POST', { kondisi_catatan: kondisi, denda_tambahan: Number(denda) });
+  const res = await apiCall(`/kasir/pengembalian/${id}`, 'POST', { kondisi_catatan: kondisi, status_unit: statusUnit, denda_tambahan: Number(denda) });
   hideLoader();
   if(res && res.status === 200) {
-    showToast("Pengembalian berhasil diproses.", "success");
+    let msg = `Pengembalian berhasil.\n`;
+    if(res.data.data.terlambat) msg += `Denda Terlambat: Rp ${res.data.data.denda_otomatis.toLocaleString('id-ID')}\n`;
+    if(res.data.data.total_denda > 0) msg += `Total Denda: Rp ${res.data.data.total_denda.toLocaleString('id-ID')}`;
+    
+    showToast(msg, "success");
     closeModal('modalPengembalian');
     loadBookings();
   } else {
