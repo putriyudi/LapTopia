@@ -18,6 +18,7 @@
         <a href="#" class="sidebar-link">Kelola Laptop</a>
         <a href="#" class="sidebar-link">Kelola User</a>
         <a href="#" class="sidebar-link">Laporan Transaksi</a>
+        <a href="#" class="sidebar-link">Laporan Keamanan</a>
         <a href="/" class="sidebar-link" target="_blank">Lihat Website</a>
         <a href="#" class="sidebar-link" style="color: #fca5a5; margin-top: auto;" onclick="logout();return false;">Logout</a>
       </nav>
@@ -48,7 +49,7 @@
             <div class="card-body p-0">
               <div class="table-responsive">
                 <table>
-                  <thead><tr><th>SN</th><th>Merk/Tipe</th><th>Harga/Hari</th><th>Status</th></tr></thead>
+                  <thead><tr><th>SN</th><th>Merk/Tipe</th><th>Harga/Hari</th><th>Status</th><th>Aksi</th></tr></thead>
                   <tbody id="lapTable"></tbody>
                 </table>
               </div>
@@ -58,11 +59,14 @@
         <!-- Tab Users -->
         <div id="tab-users" style="display: none;">
           <div class="card">
-            <div class="card-header"><h3 style="font-size: 1.1rem;">Daftar Pengguna</h3></div>
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="font-size: 1.1rem;">Daftar Pengguna</h3>
+              <button class="btn btn-primary" id="btnTambahKasir" onclick="openTambahKasir()">+ Buat Kasir</button>
+            </div>
             <div class="card-body p-0">
               <div class="table-responsive">
                 <table>
-                  <thead><tr><th>ID</th><th>Nama</th><th>Email</th><th>Role</th><th>Terdaftar</th></tr></thead>
+                  <thead><tr><th>ID</th><th>Nama</th><th>Email</th><th>Role</th><th>Terdaftar</th><th>Aksi</th></tr></thead>
                   <tbody id="usrTable"></tbody>
                 </table>
               </div>
@@ -72,7 +76,21 @@
         <!-- Tab Laporan -->
         <div id="tab-laporan" style="display: none;">
            <div class="card">
-            <div class="card-header"><h3 style="font-size: 1.1rem;">Laporan Transaksi</h3></div>
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="font-size: 1.1rem;">Laporan Transaksi</h3>
+              <div style="display:flex; gap:0.5rem;">
+                <input type="date" id="filter_dari" class="form-control" style="width:150px">
+                <input type="date" id="filter_sampai" class="form-control" style="width:150px">
+                <select id="filter_status" class="form-control" style="width:120px">
+                  <option value="">Semua Status</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Aktif">Aktif</option>
+                  <option value="Terlambat">Terlambat</option>
+                  <option value="Booking">Booking</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadLaporan()">Filter</button>
+              </div>
+            </div>
             <div class="card-body p-0">
               <div class="table-responsive">
                 <table>
@@ -84,7 +102,71 @@
           </div>
         </div>
       </div>
+        <!-- Tab Keamanan -->
+        <div id="tab-keamanan" style="display: none;">
+          <div class="card">
+            <div class="card-header"><h3 style="font-size: 1.1rem;">Laporan Pentest & Bug Bounty</h3></div>
+            <div class="card-body">
+              <p>Simulasi Laporan Keamanan. LapTopia Secure POS.</p>
+              <div class="table-responsive mt-3">
+                <table>
+                  <thead><tr><th>ID Bug</th><th>Reporter</th><th>Severity</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>#BB-001</td><td>WhiteHatID</td><td><span class="badge badge-warning">Medium</span></td><td><span class="badge badge-success">Fixed</span></td></tr>
+                    <tr><td>#PT-002</td><td>SecTeam</td><td><span class="badge badge-primary">Low</span></td><td><span class="badge badge-success">Closed</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
+  </div>
+  
+  <!-- Modal Laptop -->
+  <div id="modalLaptop" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn" style="position:absolute; top:10px; right:10px;" onclick="closeModal('modalLaptop')">✕</button>
+      <div class="card-header"><h3 id="modalLaptopTitle">Tambah Laptop</h3></div>
+      <div class="card-body">
+        <input type="hidden" id="lap_id">
+        <div class="form-group"><label>Nomor Seri</label><input type="text" id="lap_sn" class="form-control" required></div>
+        <div class="form-group"><label>Merk / Tipe</label><input type="text" id="lap_merk" class="form-control" required></div>
+        <div class="form-group"><label>Spesifikasi</label><input type="text" id="lap_spek" class="form-control"></div>
+        <div class="form-group"><label>Harga Sewa/Hari</label><input type="number" id="lap_harga" class="form-control" required min="0"></div>
+        <div class="form-group"><label>Status</label><select id="lap_status" class="form-control"><option value="Tersedia">Tersedia</option><option value="Disewa">Disewa</option><option value="Maintenance">Maintenance</option></select></div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitLaptop()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal User Role -->
+  <div id="modalUser" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn" style="position:absolute; top:10px; right:10px;" onclick="closeModal('modalUser')">✕</button>
+      <div class="card-header"><h3>Ubah Role User</h3></div>
+      <div class="card-body">
+        <input type="hidden" id="usr_id">
+        <div class="form-group"><label>Role Baru</label><select id="usr_role" class="form-control"><option value="user">User</option><option value="kasir">Kasir</option><option value="admin">Admin</option></select></div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitUserRole()">Update Role</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Tambah Kasir -->
+  <div id="modalKasir" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn" style="position:absolute; top:10px; right:10px;" onclick="closeModal('modalKasir')">✕</button>
+      <div class="card-header"><h3>Buat Akun Kasir</h3></div>
+      <div class="card-body">
+        <div class="form-group"><label>Nama Lengkap</label><input type="text" id="kas_nama" class="form-control" required></div>
+        <div class="form-group"><label>Email</label><input type="email" id="kas_email" class="form-control" required></div>
+        <div class="form-group"><label>No HP</label><input type="text" id="kas_hp" class="form-control" required></div>
+        <div class="form-group"><label>Password</label><input type="password" id="kas_pass" class="form-control" required></div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitKasir()">Buat Kasir</button>
+      </div>
+    </div>
   </div>
   <script src="/js/api.js"></script>
   <script src="/js/dashboard-admin.js"></script>

@@ -26,7 +26,8 @@ router.post('/booking',
     body('alamat_penyewa').trim().isLength({ min: 5 }),
     body('email_penyewa').isEmail().normalizeEmail(),
     body('tgl_mulai_sewa').isISO8601(),
-    body('durasi_hari').isInt({ min: 1, max: 90 })
+    body('durasi_hari').isInt({ min: 1, max: 90 }),
+    body('payment_method').isIn(['Tunai', 'Kartu Debit/Kredit', 'DANA', 'GoPay', 'OVO'])
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -34,17 +35,15 @@ router.post('/booking',
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'Foto KTP/jaminan wajib diupload.' });
-    }
-
     const {
       id_laptop, nama_penyewa, nik_penyewa, no_hp_penyewa,
-      alamat_penyewa, email_penyewa, tgl_mulai_sewa, durasi_hari
+      alamat_penyewa, email_penyewa, tgl_mulai_sewa, durasi_hari, payment_method
     } = req.body;
 
-    // Cek apakah request dari user login
     let id_user_penyewa = null;
+    let final_ktp_path = req.file ? req.file.path : null;
+
+    // Cek apakah request dari user login
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       try {
@@ -55,6 +54,23 @@ router.post('/booking',
     }
 
     try {
+      if (id_user_penyewa) {
+        if (!final_ktp_path) {
+          const [userRows] = await db.query('SELECT foto_ktp_path FROM users WHERE id_user = ?', [id_user_penyewa]);
+          if (userRows.length && userRows[0].foto_ktp_path) {
+            final_ktp_path = userRows[0].foto_ktp_path;
+          } else {
+            return res.status(400).json({ success: false, message: 'Anda belum memiliki foto KTP di profil. Harap upload foto KTP Anda.' });
+          }
+        } else {
+          await db.query('UPDATE users SET foto_ktp_path = ? WHERE id_user = ?', [final_ktp_path, id_user_penyewa]);
+        }
+      } else {
+        if (!final_ktp_path) {
+          return res.status(400).json({ success: false, message: 'Foto KTP/jaminan wajib diupload untuk penyewa Guest.' });
+        }
+      }
+
       // Cek laptop tersedia
       const [laptops] = await db.query(
         'SELECT * FROM laptops WHERE id_laptop = ? AND status = "Tersedia"',
@@ -74,12 +90,12 @@ router.post('/booking',
         `INSERT INTO transaksi
           (id_user_penyewa, id_laptop, nama_penyewa, nik_penyewa, no_hp_penyewa,
            alamat_penyewa, email_penyewa, jaminan_file_path,
-           tgl_mulai_sewa, durasi_hari, tgl_kembali_rencana, total_biaya, status_transaksi)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Booking')`,
+           tgl_mulai_sewa, durasi_hari, tgl_kembali_rencana, total_biaya, status_transaksi, payment_status, payment_method)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Booking', 'pending', ?)`,
         [
           id_user_penyewa, id_laptop, nama_penyewa, nik_penyewa, no_hp_penyewa,
-          alamat_penyewa, email_penyewa, req.file.path,
-          tglMulai, parseInt(durasi_hari), tglRencana, total
+          alamat_penyewa, email_penyewa, final_ktp_path,
+          tglMulai, parseInt(durasi_hari), tglRencana, total, payment_method
         ]
       );
 
@@ -145,6 +161,69 @@ router.get('/:id', verifyToken, async (req, res) => {
     }
 
     res.json({ success: true, data: trx });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── DOWNLOAD KONTRAK PDF (Aman) ───────────────────────────
+router.get('/kontrak/:id_transaksi', async (req, res) => {
+  try {
+    const { id_transaksi } = req.params;
+    const { verification_token } = req.query; 
+    
+    // Cek kontrak di DB
+    const [rows] = await db.query(
+      `SELECT t.id_user_penyewa, k.file_pdf_path, k.digital_hash 
+       FROM transaksi t
+       JOIN kontrak_digital k ON k.id_transaksi = t.id_transaksi
+       WHERE t.id_transaksi = ?`,
+      [id_transaksi]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Kontrak tidak ditemukan.' });
+    }
+
+    const { id_user_penyewa, file_pdf_path, digital_hash } = rows[0];
+
+    let isAuthorized = false;
+
+    // 1. Cek JWT Token
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+        
+        // Admin / Kasir bebas akses
+        if (['admin', 'kasir'].includes(decoded.role)) {
+          isAuthorized = true;
+        } 
+        // User hanya bisa akses miliknya sendiri
+        else if (decoded.role === 'user' && decoded.id_user === id_user_penyewa) {
+          isAuthorized = true;
+        }
+      } catch (err) {
+        // Lanjut cek verification_token
+      }
+    }
+
+    // 2. Guest via verification_token
+    if (!isAuthorized && verification_token && verification_token === digital_hash) {
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      return res.status(403).json({ success: false, message: 'Akses ditolak.' });
+    }
+
+    // Amankan dari Path Traversal
+    const path = require('path');
+    const safeFilename = path.basename(file_pdf_path);
+    const safePath = path.join(__dirname, '../../contracts', safeFilename);
+
+    res.download(safePath);
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error.' });
   }

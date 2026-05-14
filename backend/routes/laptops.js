@@ -75,17 +75,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ── GET SATU LAPTOP ───────────────────────────────────────
-router.get('/:id', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM laptops WHERE id_laptop = ?', [req.params.id]);
-    if (!rows.length) return res.status(404).json({ success: false, message: 'Laptop tidak ditemukan.' });
-    res.json({ success: true, data: rows[0] });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Server error.' });
-  }
-});
-
 // ── GET MERK UNIK (untuk filter dropdown) ────────────────
 router.get('/meta/merks', async (req, res) => {
   try {
@@ -93,6 +82,17 @@ router.get('/meta/merks', async (req, res) => {
       `SELECT DISTINCT SUBSTRING_INDEX(merk_tipe, ' ', 1) AS merk FROM laptops ORDER BY merk`
     );
     res.json({ success: true, data: rows.map(r => r.merk) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+// ── GET SATU LAPTOP ───────────────────────────────────────
+router.get('/:id', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM laptops WHERE id_laptop = ?', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Laptop tidak ditemukan.' });
+    res.json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error.' });
   }
