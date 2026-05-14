@@ -166,4 +166,67 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// ── DOWNLOAD KONTRAK PDF (Aman) ───────────────────────────
+router.get('/kontrak/:id_transaksi', async (req, res) => {
+  try {
+    const { id_transaksi } = req.params;
+    const { verification_token } = req.query; 
+    
+    // Cek kontrak di DB
+    const [rows] = await db.query(
+      `SELECT t.id_user_penyewa, k.file_pdf_path, k.digital_hash 
+       FROM transaksi t
+       JOIN kontrak_digital k ON k.id_transaksi = t.id_transaksi
+       WHERE t.id_transaksi = ?`,
+      [id_transaksi]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ success: false, message: 'Kontrak tidak ditemukan.' });
+    }
+
+    const { id_user_penyewa, file_pdf_path, digital_hash } = rows[0];
+
+    let isAuthorized = false;
+
+    // 1. Cek JWT Token
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+        
+        // Admin / Kasir bebas akses
+        if (['admin', 'kasir'].includes(decoded.role)) {
+          isAuthorized = true;
+        } 
+        // User hanya bisa akses miliknya sendiri
+        else if (decoded.role === 'user' && decoded.id_user === id_user_penyewa) {
+          isAuthorized = true;
+        }
+      } catch (err) {
+        // Lanjut cek verification_token
+      }
+    }
+
+    // 2. Guest via verification_token
+    if (!isAuthorized && verification_token && verification_token === digital_hash) {
+      isAuthorized = true;
+    }
+
+    if (!isAuthorized) {
+      return res.status(403).json({ success: false, message: 'Akses ditolak.' });
+    }
+
+    // Amankan dari Path Traversal
+    const path = require('path');
+    const safeFilename = path.basename(file_pdf_path);
+    const safePath = path.join(__dirname, '../../contracts', safeFilename);
+
+    res.download(safePath);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
 module.exports = router;

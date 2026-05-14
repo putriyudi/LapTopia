@@ -216,7 +216,7 @@ async function loadRiwayat() {
                     <td>${trx.durasi_hari} Hari</td>
                     <td><span class="badge ${trx.payment_status === 'paid' ? 'success' : 'warning'}">${(trx.payment_status || 'pending').toUpperCase()}</span></td>
                     <td><span class="badge ${statusClass}">${trx.status_transaksi || 'Proses'}</span></td>
-                    <td>${trx.digital_hash ? `<small class="text-muted">${trx.digital_hash.substring(0,8)}...</small>` : '-'}</td>
+                    <td>${trx.file_pdf_path ? `<button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.8rem" onclick="lihatKontrakUser(${trx.id_transaksi})">Unduh PDF</button>` : '-'}</td>
                 </tr>
             `;
         });
@@ -243,4 +243,26 @@ async function loadProfileData() {
             if (input) input.value = value;
         }
     }
+}
+
+/**
+ * Mengunduh/melihat kontrak dari sisi user
+ */
+window.lihatKontrakUser = function(id) {
+    const token = localStorage.getItem('token');
+    if (typeof showLoader === 'function') showLoader();
+    fetch(`/api/transaksi/kontrak/${id}`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(async res => {
+            if (typeof hideLoader === 'function') hideLoader();
+            if(res.ok) {
+                const blob = await res.blob();
+                window.open(URL.createObjectURL(blob), '_blank');
+            } else {
+                showToast("Akses ditolak atau kontrak belum tersedia.", "warning");
+            }
+        })
+        .catch(() => {
+            if (typeof hideLoader === 'function') hideLoader();
+            showToast("Terjadi kesalahan saat mengunduh kontrak.", "error");
+        });
 }

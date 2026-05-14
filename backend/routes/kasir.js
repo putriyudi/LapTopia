@@ -258,7 +258,10 @@ router.get('/kontrak/:id_transaksi', verifyToken, isKasir, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Kontrak belum digenerate.' });
     }
 
-    const filePath = path.join(__dirname, '../../', rows[0].file_pdf_path);
+    // Amankan dari Path Traversal
+    const safeFilename = path.basename(rows[0].file_pdf_path);
+    const filePath = path.join(__dirname, '../../contracts', safeFilename);
+    
     res.download(filePath);
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error.' });
