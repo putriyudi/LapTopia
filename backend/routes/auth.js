@@ -39,7 +39,7 @@ router.post('/register',
       }
 
       // Hash password
-      const hashed = password;
+      const hashed = await bcrypt.hash(password, 12);
 
       const [result] = await db.query(
         `INSERT INTO users (username, email, password, role, nama_lengkap, nik, no_hp, alamat, foto_ktp_path)
@@ -84,7 +84,7 @@ router.post('/login',
       }
 
       const user = rows[0];
-      const match = password === user.password;
+      const match = await bcrypt.compare(password, user.password);
       if (!match) {
         return res.status(401).json({ success: false, message: 'Email atau password salah.' });
       }
