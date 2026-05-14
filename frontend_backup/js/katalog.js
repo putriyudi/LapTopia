@@ -1,22 +1,10 @@
 /* frontend/js/katalog.js */
 let currentPage = 1;
 
-function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>'"]/g, (char) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-    }[char]));
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Inisialisasi Auth Nav (Pastikan tombol dashboard/logout muncul)
-    if (typeof updateNavbarAuth === 'function') {
-        updateNavbarAuth();
-    } else if (typeof updateAuthNav === 'function') {
-        updateAuthNav();
+    if (typeof updateAuthNav === 'function') {
+        updateAuthNav(); 
     }
 
     // 2. Load Metadata Merk
@@ -30,26 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             merkSelect.appendChild(opt);
         });
     }
-
-    const filterButton = document.querySelector('.filter-sidebar .btn-primary');
-    if (filterButton) {
-        filterButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadKatalog(1);
-        });
-    }
-
-    ['search', 'merk', 'status'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const eventName = id === 'search' ? 'keydown' : 'change';
-        el.addEventListener(eventName, (e) => {
-            if (id !== 'search' || e.key === 'Enter') {
-                e.preventDefault();
-                loadKatalog(1);
-            }
-        });
-    });
     
     loadKatalog(1);
 });
@@ -75,20 +43,11 @@ async function loadKatalog(page = 1) {
     if (res && res.status === 200) {
         const { data, pagination } = res.data;
         document.getElementById('totalItems').innerText = `${pagination.total} Laptop Ditemukan`;
-
-        if (!data || data.length === 0) {
-            grid.innerHTML = `<div class="card empty-state" style="grid-column:1/-1;"><div class="card-body text-center"><h3>Tidak ada laptop ditemukan</h3><p class="text-muted">Coba ubah kata kunci pencarian atau filter status.</p></div></div>`;
-            renderPagination(pagination);
-            return;
-        }
         
         data.forEach(laptop => {
             const isTersedia = laptop.status === 'Tersedia';
             const btnClass = isTersedia ? 'btn-primary' : 'btn-outline';
             const btnText = isTersedia ? 'Sewa Sekarang' : laptop.status;
-            const statusClass = isTersedia ? 'badge-success' : laptop.status === 'Maintenance' ? 'badge-warning' : 'badge-secondary';
-            const merkTipe = escapeHTML(laptop.merk_tipe);
-            const spesifikasi = escapeHTML(laptop.spesifikasi || '-');
             
             // Render kartu laptop
             const card = document.createElement('div');
@@ -98,11 +57,8 @@ async function loadKatalog(page = 1) {
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 60px; opacity: 0.3;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 </div>
                 <div class="laptop-content">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.75rem; margin-bottom:.65rem;">
-                        <div class="laptop-title">${merkTipe}</div>
-                        <span class="badge ${statusClass}">${escapeHTML(laptop.status)}</span>
-                    </div>
-                    <div class="laptop-spec">${spesifikasi}</div>
+                    <div class="laptop-title">${laptop.merk_tipe}</div>
+                    <div class="laptop-spec">${laptop.spesifikasi || '-'}</div>
                     <div class="laptop-price">${formatRupiah(laptop.harga_sewa_per_hari)} <span>/ hari</span></div>
                 </div>
             `;
@@ -134,9 +90,6 @@ async function loadKatalog(page = 1) {
         });
         
         renderPagination(pagination);
-    } else {
-        document.getElementById('totalItems').innerText = 'Gagal memuat katalog';
-        grid.innerHTML = `<div class="card empty-state" style="grid-column:1/-1;"><div class="card-body text-center"><h3>Gagal memuat data</h3><p class="text-muted">Periksa koneksi server/database, lalu coba refresh halaman.</p></div></div>`;
     }
 }
 

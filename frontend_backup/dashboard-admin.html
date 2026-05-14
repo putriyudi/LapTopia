@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="logo" style="font-size: 1.2rem;">Laptop<span>Rent</span> Admin</a>
+        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.45rem;">Management Panel</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active">Statistik</a>
+        <a href="#" class="sidebar-link">Kelola Laptop</a>
+        <a href="#" class="sidebar-link">Kelola User</a>
+        <a href="#" class="sidebar-link">Laporan Transaksi</a>
+        <a href="#" class="sidebar-link">Laporan Keamanan</a>
+        <a href="/" class="sidebar-link" target="_blank">Lihat Website</a>
+        <a href="#" class="sidebar-link" style="color: #fca5a5; margin-top: auto;" onclick="logout();return false;">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-content">
+      <div class="dashboard-topbar">
+        <div>
+          <h2 style="font-size: 1.32rem;" id="pageTitle">Statistik Dashboard</h2>
+          <p class="text-muted" style="font-size: .86rem; margin-top: .2rem;">Kelola unit, pengguna, transaksi, dan laporan keamanan sistem.</p>
+        </div>
+        <div style="font-size: 0.9rem; font-weight: 700;" id="adminName">Loading...</div>
+      </div>
+
+      <div class="dashboard-main">
+        <div id="tab-stats">
+          <div class="grid grid-cols-4 mb-4">
+            <div class="card"><div class="card-body"><h4 class="text-muted" style="font-size:.82rem; letter-spacing:.04em; text-transform:uppercase;">Total Pendapatan</h4><h2 id="st_pendapatan" style="font-size:1.65rem; margin-top:.45rem;">Rp 0</h2></div></div>
+            <div class="card"><div class="card-body"><h4 class="text-muted" style="font-size:.82rem; letter-spacing:.04em; text-transform:uppercase;">Transaksi Aktif</h4><h2 id="st_trx_aktif" style="font-size:1.65rem; margin-top:.45rem;">0</h2></div></div>
+            <div class="card"><div class="card-body"><h4 class="text-muted" style="font-size:.82rem; letter-spacing:.04em; text-transform:uppercase;">Laptop Disewa</h4><h2 id="st_lap_sewa" style="font-size:1.65rem; margin-top:.45rem;">0</h2></div></div>
+            <div class="card"><div class="card-body"><h4 class="text-muted" style="font-size:.82rem; letter-spacing:.04em; text-transform:uppercase;">Total User</h4><h2 id="st_users" style="font-size:1.65rem; margin-top:.45rem;">0</h2></div></div>
+          </div>
+        </div>
+
+        <div id="tab-laptops" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Daftar Laptop</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Manajemen unit, harga sewa, dan status ketersediaan laptop.</p>
+              </div>
+              <button class="btn btn-primary" id="btnTambahLaptop">+ Tambah Laptop</button>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table>
+                  <thead><tr><th>SN</th><th>Merk/Tipe</th><th>Harga/Hari</th><th>Status</th><th>Aksi</th></tr></thead>
+                  <tbody id="lapTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-users" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Daftar Pengguna</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Kelola akun user dan kasir sesuai kebutuhan operasional.</p>
+              </div>
+              <button class="btn btn-primary" id="btnTambahKasir" onclick="openTambahKasir()">+ Buat Kasir</button>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table>
+                  <thead><tr><th>ID</th><th>Nama</th><th>Email</th><th>Role</th><th>Terdaftar</th><th>Aksi</th></tr></thead>
+                  <tbody id="usrTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-laporan" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Laporan Transaksi</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Pantau transaksi berdasarkan tanggal dan status sewa.</p>
+              </div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <input type="date" id="filter_dari" class="form-control" style="width:150px">
+                <input type="date" id="filter_sampai" class="form-control" style="width:150px">
+                <select id="filter_status" class="form-control" style="width:145px">
+                  <option value="">Semua Status</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Aktif">Aktif</option>
+                  <option value="Terlambat">Terlambat</option>
+                  <option value="Booking">Booking</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadLaporan()">Filter</button>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table>
+                  <thead><tr><th>ID</th><th>Penyewa</th><th>Laptop</th><th>Total Biaya</th><th>Status</th><th>Tanggal</th></tr></thead>
+                  <tbody id="lapTrxTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-keamanan" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Laporan Pentest & Bug Bounty</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Dokumentasi simulasi keamanan untuk mendukung laporan tugas besar.</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <p>Simulasi Laporan Keamanan. LapTopia Secure POS.</p>
+              <div class="table-responsive mt-3">
+                <table>
+                  <thead><tr><th>ID Bug</th><th>Reporter</th><th>Severity</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>#BB-001</td><td>WhiteHatID</td><td><span class="badge badge-warning">Medium</span></td><td><span class="badge badge-success">Fixed</span></td></tr>
+                    <tr><td>#PT-002</td><td>SecTeam</td><td><span class="badge badge-primary">Low</span></td><td><span class="badge badge-success">Closed</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modalLaptop" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalLaptop')">✕</button>
+      <div class="card-header"><h3 id="modalLaptopTitle">Tambah Laptop</h3></div>
+      <div class="card-body">
+        <input type="hidden" id="lap_id">
+        <div class="form-group"><label>Nomor Seri</label><input type="text" id="lap_sn" class="form-control" required></div>
+        <div class="form-group"><label>Merk / Tipe</label><input type="text" id="lap_merk" class="form-control" required></div>
+        <div class="form-group"><label>Spesifikasi</label><input type="text" id="lap_spek" class="form-control"></div>
+        <div class="form-group"><label>Harga Sewa/Hari</label><input type="number" id="lap_harga" class="form-control" required min="0"></div>
+        <div class="form-group"><label>Status</label><select id="lap_status" class="form-control"><option value="Tersedia">Tersedia</option><option value="Disewa">Disewa</option><option value="Maintenance">Maintenance</option></select></div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitLaptop()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalUser" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalUser')">✕</button>
+      <div class="card-header"><h3>Ubah Role User</h3></div>
+      <div class="card-body">
+        <input type="hidden" id="usr_id">
+        <div class="form-group"><label>Role Baru</label><select id="usr_role" class="form-control"><option value="user">User</option><option value="kasir">Kasir</option><option value="admin">Admin</option></select></div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitUserRole()">Update Role</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalKasir" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 400px; position:relative;">
+      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalKasir')">✕</button>
+      <div class="card-header"><h3>Buat Akun Kasir</h3></div>
+      <div class="card-body">
+        <div class="form-group"><label>Nama Lengkap</label><input type="text" id="kas_nama" class="form-control" required></div>
+        <div class="form-group"><label>Email</label><input type="email" id="kas_email" class="form-control" required></div>
+        <div class="form-group"><label>No HP</label><input type="text" id="kas_hp" class="form-control" required></div>
+        <div class="form-group"><label>Password</label><input type="password" id="kas_pass" class="form-control" required></div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitKasir()">Buat Kasir</button>
+      </div>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/dashboard-admin.js"></script>
+</body>
+</html>

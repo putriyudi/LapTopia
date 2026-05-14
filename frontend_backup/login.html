@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="text-center mb-4">
+        <a href="/" class="logo">Laptop<span>Rent</span></a>
+        <h2 class="mt-2" style="font-size: 1.65rem;">Masuk ke Akun Anda</h2>
+        <p class="text-muted mt-1" style="font-size: 0.92rem;">Akses dashboard sesuai role untuk mengelola penyewaan dengan aman.</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required placeholder="nama@email.com" autocomplete="email">
+        </div>
+        <div class="form-group mb-4">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" required placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.9rem; font-size: 1rem;">Masuk</button>
+      </form>
+
+      <div class="card mt-4" style="margin-bottom: 0; background: var(--accent-soft); border-color: rgba(37,99,235,.12); box-shadow: none;">
+        <div class="card-body" style="padding: 1rem;">
+          <p style="font-size: .84rem; margin: 0;"><strong style="color: var(--primary-color);">Akses internal:</strong> Akun Admin dan Kasir dibuat dari sistem, bukan melalui register umum.</p>
+        </div>
+      </div>
+
+      <div class="text-center mt-4" style="font-size: 0.9rem;">
+        Belum punya akun? <a href="/register.html" style="font-weight: 700;">Daftar sebagai User</a>
+      </div>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/login.js"></script>
+</body>
+</html>

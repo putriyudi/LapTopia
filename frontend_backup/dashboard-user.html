@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard User — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="logo">Laptop<span>Rent</span></a>
+        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.45rem;">User Dashboard</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" id="nav-riwayat">Riwayat Sewa</a>
+        <a href="#" class="sidebar-link" id="nav-sewa">Sewa Laptop</a>
+        <a href="#" class="sidebar-link" id="nav-profil">Profil Saya</a>
+        <a href="/" class="sidebar-link">Kembali ke Beranda</a>
+        <a href="#" class="sidebar-link" id="nav-logout" style="color: #fca5a5; margin-top: auto;">Logout</a>
+      </nav>
+    </aside>
+
+    <main class="dashboard-content">
+      <div class="dashboard-topbar">
+        <div>
+          <h2 style="font-size: 1.32rem;" id="pageTitle">Riwayat Sewa</h2>
+          <p class="text-muted" style="font-size: .86rem; margin-top: .2rem;">Pantau transaksi sewa, kontrak digital, dan profil penyewa.</p>
+        </div>
+        <div style="font-size: 0.9rem; font-weight: 700;" id="userGreeting">Loading...</div>
+      </div>
+
+      <div class="dashboard-main">
+        <div id="tab-riwayat">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Daftar Transaksi Saya</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Riwayat dan status sewa laptop Anda.</p>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Laptop</th>
+                      <th>Tanggal Sewa</th>
+                      <th>Durasi</th>
+                      <th>Status Pembayaran</th>
+                      <th>Status Sewa</th>
+                      <th>Kontrak Digital</th>
+                    </tr>
+                  </thead>
+                  <tbody id="riwayatTable">
+                    <tr><td colspan="7" class="text-center">Memuat data...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-sewa" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Pilih Unit Tersedia</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Katalog ringkas untuk memulai penyewaan dari dashboard user.</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="catalogGrid" class="catalog-grid">
+                <p class="text-center">Memuat katalog...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-profil" style="display: none;">
+          <div class="card" style="max-width: 680px;">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Update Profil</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Perbarui data agar form rental berikutnya bisa terisi otomatis.</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <form id="profileForm" enctype="multipart/form-data">
+                <div class="form-group">
+                  <label class="form-label">Nama Lengkap</label>
+                  <input type="text" id="prof_nama" name="nama_lengkap" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nomor HP</label>
+                  <input type="text" id="prof_hp" name="no_hp" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Alamat</label>
+                  <input type="text" id="prof_alamat" name="alamat" class="form-control" required>
+                </div>
+                <div class="form-group secure-upload-box">
+                  <label class="form-label">Update Foto KTP (Opsional)</label>
+                  <input type="file" name="foto_ktp" class="form-control" accept="image/*" style="background: white;">
+                  <span class="form-text">Kosongkan jika tidak ingin mengganti foto KTP.</span>
+                </div>
+                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/dashboard-user.js"></script>
+</body>
+</html>

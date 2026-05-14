@@ -75,7 +75,7 @@ async function konfirmasiBayar(id) {
     showToast("Pembayaran dikonfirmasi.", "success");
     loadBookings();
   } else {
-    showToast(res?.data?.message || "Gagal konfirmasi.", "error");
+    showToast(res.data.message || "Gagal konfirmasi.", "error");
   }
 }
 
@@ -147,7 +147,7 @@ async function submitSerahTerima() {
     closeModal('modalSerahTerima');
     loadBookings();
   } else {
-    showToast(res?.data?.message || "Gagal proses.", "error");
+    showToast(res.data.message || "Gagal proses.", "error");
   }
 }
 
@@ -176,7 +176,7 @@ async function submitPengembalian() {
     closeModal('modalPengembalian');
     loadBookings();
   } else {
-    showToast(res?.data?.message || "Gagal proses.", "error");
+    showToast(res.data.message || "Gagal proses.", "error");
   }
 }
 

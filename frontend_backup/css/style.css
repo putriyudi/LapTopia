@@ -26,8 +26,6 @@
   --warning-dark: #b45309;
   --danger: #ef4444;
   --danger-dark: #dc2626;
-  --error: var(--danger);
-  --text-color: var(--text-main);
   --info: #0ea5e9;
   --radius-xs: 8px;
   --radius-sm: 10px;
@@ -271,8 +269,6 @@ strong {
 }
 
 .btn-block { width: 100%; }
-.btn-sm { padding: 0.42rem 0.68rem; font-size: 0.8rem; border-radius: var(--radius-xs); }
-.action-group { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
 
 /* Forms */
 .form-group {
@@ -387,10 +383,7 @@ select.form-control {
 .badge-warning, .badge.warning { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 .badge-danger, .badge.danger { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 .badge-primary, .badge.info { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-.badge-neutral, .badge-secondary { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-.badge-terlambat { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-.badge-paid { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-.badge-pending { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.badge-neutral { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
 
 /* Tables */
 .table-responsive {
@@ -777,21 +770,6 @@ tbody tr:last-child td {
 #modalKTP img {
   box-shadow: var(--shadow-lg);
   border: 1px solid rgba(255, 255, 255, 0.22);
-}
-
-
-.spinner {
-  width: 46px;
-  height: 46px;
-  border: 4px solid rgba(37, 99, 235, 0.14);
-  border-top-color: var(--accent-color);
-  border-radius: 50%;
-  animation: spin 0.82s linear infinite;
-  box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.04);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 /* Toast & Loader */

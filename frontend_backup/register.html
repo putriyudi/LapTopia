@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar User — LaptopRent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card large">
+      <div class="text-center mb-4">
+        <a href="/" class="logo">Laptop<span>Rent</span></a>
+        <h2 class="mt-2" style="font-size: 1.7rem;">Daftar Akun User</h2>
+        <p class="text-muted mt-1" style="font-size: 0.92rem; max-width: 560px; margin-left: auto; margin-right: auto;">Buat akun agar data penyewa bisa tersimpan dan proses rental berikutnya lebih cepat tanpa input berulang.</p>
+      </div>
+
+      <form id="registerForm" enctype="multipart/form-data">
+        <div class="grid grid-cols-2">
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+            <input type="text" id="nama_lengkap" name="nama_lengkap" class="form-control" required placeholder="Sesuai KTP" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" id="email" name="email" class="form-control" required placeholder="nama@email.com" autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nomor HP / WhatsApp <span class="text-danger">*</span></label>
+            <input type="tel" id="no_hp" name="no_hp" class="form-control" required placeholder="08xxxxxxxxxx" autocomplete="tel">
+          </div>
+          <div class="form-group">
+            <label class="form-label">NIK KTP <span class="text-danger">*</span></label>
+            <input type="text" id="nik" name="nik" class="form-control" required placeholder="16 Digit NIK" minlength="16" maxlength="16" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username (Opsional)</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="username" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password <span class="text-danger">*</span></label>
+            <input type="password" id="password" name="password" class="form-control" required placeholder="Minimal 8 karakter, kombinasi" autocomplete="new-password">
+            <span class="form-text">Min 8 karakter, ada huruf besar, kecil, angka & simbol.</span>
+          </div>
+        </div>
+
+        <div class="form-group mt-1">
+          <label class="form-label">Alamat Lengkap Domisili <span class="text-danger">*</span></label>
+          <input type="text" id="alamat" name="alamat" class="form-control" required placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota" autocomplete="street-address">
+        </div>
+
+        <div class="form-group mt-3 secure-upload-box">
+          <label class="form-label" style="color: var(--primary-color);">Upload Foto KTP <span class="text-danger">*</span></label>
+          <input type="file" id="foto_ktp" name="foto_ktp" class="form-control" accept="image/jpeg, image/png, image/jpg" required style="background: white; margin-bottom: 0.65rem;">
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;"><strong style="color:var(--primary-color);">Keamanan data:</strong> Foto KTP digunakan untuk validasi penyewaan dan harus diakses melalui sistem yang terproteksi.</p>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1rem;">Daftar Sekarang</button>
+        </div>
+      </form>
+
+      <div class="text-center mt-4" style="font-size: 0.9rem;">
+        Sudah punya akun? <a href="/login.html" style="font-weight: 700;">Masuk di sini</a>
+      </div>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/register.js"></script>
+</body>
+</html>
