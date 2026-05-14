@@ -54,9 +54,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('email_penyewa').value = u.email;
         document.getElementById('alamat_penyewa').value = u.alamat || '';
         
-        // Sembunyikan upload KTP karena user login diasumsikan sudah verifikasi profil
-        ktpSection.style.display = 'none';
+        // Buat KTP opsional, tapi tetap tampilkan form-nya untuk opsi update
         ktpInput.removeAttribute('required');
+        const ktpLabel = document.querySelector('#guestKtpSection label');
+        if (ktpLabel) ktpLabel.innerHTML = 'Update Foto KTP Asli (Opsional jika sudah ada di profil)';
         document.getElementById('authStatusText').innerHTML = `Login sebagai <strong>${u.nama_lengkap}</strong>. Data otomatis terisi.`;
     } else {
         ktpInput.setAttribute('required', 'required');
@@ -94,29 +95,9 @@ async function submitCheckout() {
     const resBook = await apiCall('/transaksi/booking', 'POST', formData, true);
     
     if (resBook && resBook.status === 201) {
-        const id_transaksi = resBook.data.data.id_transaksi;
-        
-        // 2. Buat Transaksi Midtrans
-        const resToken = await apiCall('/payment/create-token', 'POST', { id_transaksi });
         hideLoader();
-        
-        if (resToken && resToken.status === 200) {
-            window.snap.pay(resToken.data.snap_token, {
-                onSuccess: function(result) {
-                    showToast("Pembayaran Berhasil!", "success");
-                    setTimeout(() => { window.location.href = '/dashboard-user.html'; }, 2000);
-                },
-                onPending: function(result) {
-                    showToast("Menunggu pembayaran...", "warning");
-                    setTimeout(() => { window.location.href = '/dashboard-user.html'; }, 2000);
-                },
-                onError: function(result) {
-                    showToast("Gagal melakukan pembayaran.", "error");
-                }
-            });
-        } else {
-            showToast("Gagal mendapatkan token pembayaran.", "error");
-        }
+        showToast("Booking Berhasil! Menunggu konfirmasi pembayaran.", "success");
+        setTimeout(() => { window.location.href = '/dashboard-user.html'; }, 2000);
     } else {
         hideLoader();
         const msg = resBook?.data?.message || "Terjadi kesalahan saat booking.";
