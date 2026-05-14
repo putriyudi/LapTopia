@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kasir POS — LaptopRent</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <a href="/" class="logo" style="font-size: 1.2rem;">Laptop<span>Rent</span> POS</a>
-        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">Kasir Mode</div>
+        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.45rem;">Kasir Mode</div>
       </div>
       <nav class="sidebar-nav">
         <a href="#" class="sidebar-link active" onclick="loadBookings()">Transaksi / POS</a>
@@ -20,15 +20,20 @@
         <a href="#" class="sidebar-link" onclick="logout()" style="color: #fca5a5; margin-top: auto;">Logout</a>
       </nav>
     </aside>
+
     <main class="dashboard-content">
       <div class="dashboard-topbar">
-        <h2 style="font-size: 1.25rem;">Manajemen Transaksi (Serah Terima & Pengembalian)</h2>
-        <div style="font-size: 0.9rem;" id="kasirName">Loading...</div>
+        <div>
+          <h2 style="font-size: 1.32rem;">Manajemen Transaksi POS</h2>
+          <p class="text-muted" style="font-size: .86rem; margin-top: .2rem;">Verifikasi booking, serah terima unit, dan proses pengembalian laptop.</p>
+        </div>
+        <div style="font-size: 0.9rem; font-weight: 700;" id="kasirName">Loading...</div>
       </div>
+
       <div class="dashboard-main">
         <div class="card mb-4">
-          <div class="card-body" style="display: flex; gap: 1rem;">
-            <select id="filterStatus" class="form-control" style="width: 200px;" onchange="loadBookings()">
+          <div class="card-body" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <select id="filterStatus" class="form-control" style="width: 250px;" onchange="loadBookings()">
               <option value="">Semua Status</option>
               <option value="Booking">Menunggu Serah Terima (Booking)</option>
               <option value="Aktif">Sedang Disewa (Aktif)</option>
@@ -36,9 +41,17 @@
               <option value="Selesai">Selesai</option>
             </select>
             <button class="btn btn-primary" onclick="loadBookings()">Refresh Data</button>
+            <span class="text-muted" style="font-size: .85rem;">Gunakan filter untuk memantau transaksi sesuai status operasional.</span>
           </div>
         </div>
+
         <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 style="font-size: 1.12rem;">Daftar Transaksi</h3>
+              <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Aksi POS dilakukan setelah pembayaran dan data penyewa diverifikasi.</p>
+            </div>
+          </div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table>
@@ -62,15 +75,15 @@
       </div>
     </main>
   </div>
-  <!-- Modal Serah Terima -->
+
   <div id="modalSerahTerima" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
     <div class="card" style="width: 400px; position:relative;">
-      <button class="btn" style="position:absolute; top:10px; right:10px;" onclick="closeModal('modalSerahTerima')">✕</button>
+      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalSerahTerima')">✕</button>
       <div class="card-header">
         <h3>Proses Serah Terima</h3>
       </div>
       <div class="card-body">
-        <p class="mb-3 text-muted">Pastikan Anda telah mengecek KTP fisik pelanggan dan kondisi laptop.</p>
+        <p class="mb-3 text-muted">Pastikan KTP fisik pelanggan, data transaksi, pembayaran, dan kondisi laptop sudah dicek.</p>
         <input type="hidden" id="st_id_transaksi">
         <div class="form-group">
           <label class="form-label">Verifikasi Jaminan Fisik</label>
@@ -92,17 +105,17 @@
       </div>
     </div>
   </div>
-  <!-- Modal KTP -->
+
   <div id="modalKTP" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-    <div class="card" style="width: 80%; max-width: 600px; position:relative; background: transparent; box-shadow: none;">
-      <button class="btn btn-outline" style="position:absolute; top:-40px; right:0; color:white; border-color:white;" onclick="closeModal('modalKTP')">Tutup ✕</button>
-      <img id="ktpImage" src="" style="width: 100%; border-radius: 8px; object-fit: contain;">
+    <div class="card" style="width: 80%; max-width: 600px; position:relative; background: transparent; box-shadow: none; border: none;">
+      <button class="btn btn-outline" style="position:absolute; top:-48px; right:0; color:white; border-color:rgba(255,255,255,.72); width:auto;" onclick="closeModal('modalKTP')">Tutup ✕</button>
+      <img id="ktpImage" src="" style="width: 100%; border-radius: 14px; object-fit: contain;">
     </div>
   </div>
-  <!-- Modal Pengembalian -->
+
   <div id="modalPengembalian" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
     <div class="card" style="width: 400px; position:relative;">
-      <button class="btn" style="position:absolute; top:10px; right:10px;" onclick="closeModal('modalPengembalian')">✕</button>
+      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalPengembalian')">✕</button>
       <div class="card-header">
         <h3>Proses Pengembalian</h3>
       </div>
@@ -123,8 +136,8 @@
           <label class="form-label">Denda Tambahan (Kerusakan dll) Rp</label>
           <input type="number" id="pg_denda" class="form-control" value="0" min="0">
         </div>
-        <p class="text-muted" style="font-size:0.8rem; margin-bottom:1rem;">*Denda keterlambatan otomatis dihitung oleh sistem.</p>
-        <button class="btn btn-primary" style="width:100%; background:var(--success)" onclick="submitPengembalian()">Konfirmasi Pengembalian</button>
+        <p class="text-muted" style="font-size:0.82rem; margin-bottom:1rem;">Denda keterlambatan otomatis dihitung oleh sistem jika melewati tanggal rencana kembali.</p>
+        <button class="btn btn-primary" style="width:100%; background:linear-gradient(135deg, var(--success), var(--success-dark));" onclick="submitPengembalian()">Konfirmasi Pengembalian</button>
       </div>
     </div>
   </div>
