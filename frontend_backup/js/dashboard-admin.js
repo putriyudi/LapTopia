@@ -8,17 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add event listeners for sidebar links
   document.querySelectorAll('.sidebar-link').forEach(link => {
     link.addEventListener('click', (e) => {
-      const text = link.innerText.trim();
-      if (text === 'Lihat Website') return;
-      if (text === 'Logout') return;
-
       e.preventDefault();
+      const text = link.innerText.trim();
       let tabId = '';
       if (text === 'Statistik') tabId = 'stats';
       else if (text === 'Kelola Laptop') tabId = 'laptops';
       else if (text === 'Kelola User') tabId = 'users';
       else if (text === 'Laporan Transaksi') tabId = 'laporan';
       else if (text === 'Laporan Keamanan') tabId = 'keamanan';
+      else if (text === 'Lihat Website' || text === 'Logout') return;
       
       if (tabId) switchTab(tabId, link);
     });

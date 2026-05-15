@@ -24,22 +24,16 @@ function showToast(message, type = 'info') {
   
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-
-  const title = document.createElement('div');
-  title.style.cssText = 'font-weight: 700; font-size: 0.9rem; color: #0f172a; margin-bottom: 0.15rem;';
-  title.textContent = type === 'success' ? 'Berhasil' : type === 'error' ? 'Gagal' : type === 'warning' ? 'Perhatian' : 'Info';
-
-  const body = document.createElement('div');
-  body.style.cssText = 'font-size: 0.85rem; color: #64748b; white-space: pre-line;';
-  body.textContent = String(message || '');
-
-  toast.appendChild(title);
-  toast.appendChild(body);
+  toast.innerHTML = `
+    <div>
+      <div style="font-weight: 600; font-size: 0.9rem;">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+      <div style="font-size: 0.85rem; color: #64748b;">${message}</div>
+    </div>
+  `;
   container.appendChild(toast);
   
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateX(12px)';
     setTimeout(() => toast.remove(), 300);
   }, 4000);
 }
@@ -162,13 +156,6 @@ function formatDate(dateString) {
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-function formatJustDate(dateString) {
-  if (!dateString) return '-';
-  const d = new Date(dateString);
-  if (Number.isNaN(d.getTime())) return '-';
-  return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
 // --- Initial Setup & Navbar Auth ---
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -204,9 +191,8 @@ window.updateNavbarAuth = function() {
     
     // Nama User
     const span = document.createElement('span');
-    span.className = 'navbar-user-chip';
     span.style.cssText = "font-size: 0.9rem; margin-right: 1rem; color: #475569;";
-    span.textContent = `Hi, ${auth.user.nama_lengkap || 'User'}`;
+    span.innerHTML = `Hi, <strong>${auth.user.nama_lengkap}</strong>`;
     
     // Link Dashboard
     const aDash = document.createElement('a');
@@ -232,20 +218,9 @@ window.updateNavbarAuth = function() {
 
   } else {
     // Tampilan jika belum login
-    const login = document.createElement('a');
-    login.href = '/login.html';
-    login.className = 'nav-auth-link';
-    login.textContent = 'Login';
-
-    const register = document.createElement('a');
-    register.href = '/register.html';
-    register.className = 'btn btn-primary';
-    register.textContent = 'Daftar';
-
-    authNav.appendChild(login);
-    authNav.appendChild(register);
+    authNav.innerHTML = `
+      <a href="/login.html" style="margin-right: 1.5rem; font-weight: 500;">Login</a>
+      <a href="/register.html" class="btn btn-primary">Daftar</a>
+    `;
   }
 };
-
-// Backward-compatible alias untuk file lama yang masih memanggil updateAuthNav().
-window.updateAuthNav = window.updateNavbarAuth;
