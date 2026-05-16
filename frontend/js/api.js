@@ -100,14 +100,32 @@ function setAuth(token, user) {
 /**
  * Logout Global: Menghapus sesi dan membersihkan storage
  */
-window.logout = function() {
-  console.log("Menjalankan proses logout...");
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  currentUser = null;
-  
-  // Arahkan ke beranda
-  window.location.href = '/index.html';
+window.logout = function(skipConfirm = false) {
+  const performLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    currentUser = null;
+    
+    if (typeof showToast === 'function') {
+      showToast('Berhasil keluar. Sampai jumpa!', 'success');
+    }
+    
+    setTimeout(() => {
+      window.location.href = '/index.html';
+    }, 1000);
+  };
+
+  if (skipConfirm) {
+    performLogout();
+  } else {
+    showConfirm(
+      'Konfirmasi Logout',
+      'Apakah Anda yakin ingin keluar dari LapTopia?',
+      'Ya, Keluar',
+      'Batal',
+      performLogout
+    );
+  }
 };
 
 function getAuth() {
@@ -133,9 +151,9 @@ function requireAuth(allowedRoles = []) {
   }
   
   if (allowedRoles.length > 0 && !allowedRoles.includes(auth.user.role)) {
-    if (auth.user.role === 'admin') window.location.href = '/dashboard-admin.html';
-    else if (auth.user.role === 'kasir') window.location.href = '/dashboard-kasir.html';
-    else window.location.href = '/dashboard-user.html';
+    if (auth.user.role === 'admin') window.location.href = '/admin/';
+    else if (auth.user.role === 'kasir') window.location.href = '/kasir/';
+    else window.location.href = '/index.html';
     return null;
   }
   return auth.user;
@@ -144,9 +162,9 @@ function requireAuth(allowedRoles = []) {
 function redirectIfAuthenticated() {
   const auth = getAuth();
   if (auth) {
-    if (auth.user.role === 'admin') window.location.href = '/dashboard-admin.html';
-    else if (auth.user.role === 'kasir') window.location.href = '/dashboard-kasir.html';
-    else window.location.href = '/dashboard-user.html';
+    if (auth.user.role === 'admin') window.location.href = '/admin/';
+    else if (auth.user.role === 'kasir') window.location.href = '/kasir/';
+    else window.location.href = '/index.html';
   }
 }
 
@@ -187,6 +205,46 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
+ * Custom Confirmation Modal
+ */
+function showConfirm(title, message, okText, cancelText, onConfirm) {
+  let modal = document.getElementById('global-confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'global-confirm-modal';
+    modal.className = 'toast-container'; // Reuse toast-container for centering
+    modal.style.cssText = 'display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:20000; justify-content:center; align-items:center;';
+    modal.innerHTML = `
+      <div class="card" style="width: 320px; padding: 2rem; text-align: center; border-radius: 16px;">
+        <div style="font-size: 1.5rem; margin-bottom: 1rem;">ℹ️</div>
+        <h3 id="confirm-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;"></h3>
+        <p id="confirm-msg" style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;"></p>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="confirm-cancel" class="btn btn-outline" style="flex: 1"></button>
+          <button id="confirm-ok" class="btn btn-primary" style="flex: 1"></button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('confirm-title').innerText = title;
+  document.getElementById('confirm-msg').innerText = message;
+  document.getElementById('confirm-ok').innerText = okText;
+  document.getElementById('confirm-cancel').innerText = cancelText;
+
+  modal.style.display = 'flex';
+
+  document.getElementById('confirm-ok').onclick = () => {
+    modal.style.display = 'none';
+    if (onConfirm) onConfirm();
+  };
+  document.getElementById('confirm-cancel').onclick = () => {
+    modal.style.display = 'none';
+  };
+}
+
+/**
  * Memperbarui tampilan navbar secara dinamis berdasarkan status login.
  * Menggunakan Event Listener untuk mencegah error CSP (Content Security Policy).
  */
@@ -199,14 +257,14 @@ window.updateNavbarAuth = function() {
 
   if (auth) {
     let dashboardLink = '/dashboard-user.html';
-    if(auth.user.role === 'admin') dashboardLink = '/dashboard-admin.html';
-    if(auth.user.role === 'kasir') dashboardLink = '/dashboard-kasir.html';
+    if(auth.user.role === 'admin') dashboardLink = '/admin/';
+    if(auth.user.role === 'kasir') dashboardLink = '/kasir/';
     
     // Nama User
     const span = document.createElement('span');
     span.className = 'navbar-user-chip';
     span.style.cssText = "font-size: 0.9rem; margin-right: 1rem; color: #475569;";
-    span.textContent = `Hi, ${auth.user.nama_lengkap || 'User'}`;
+    span.textContent = `Hi, ${auth.user.username || auth.user.nama_lengkap || 'User'}`;
     
     // Link Dashboard
     const aDash = document.createElement('a');
@@ -219,11 +277,11 @@ window.updateNavbarAuth = function() {
     const btnLogout = document.createElement('button');
     btnLogout.className = "btn btn-primary";
     btnLogout.innerText = "Logout";
-    // Pasang listener manual agar tidak diblokir browser
     btnLogout.addEventListener('click', () => {
-        if(confirm('Apakah Anda yakin ingin keluar?')) {
-            window.logout();
-        }
+        showToast("Mengeluarkan akun...", "info");
+        setTimeout(() => {
+            window.logout(true); // Kirim true untuk skip confirm internal
+        }, 1000);
     });
 
     authNav.appendChild(span);
@@ -241,6 +299,7 @@ window.updateNavbarAuth = function() {
     register.href = '/register.html';
     register.className = 'btn btn-primary';
     register.textContent = 'Daftar';
+    register.style.color = '#ffffff';
 
     authNav.appendChild(login);
     authNav.appendChild(register);

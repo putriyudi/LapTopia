@@ -1,33 +1,30 @@
-// backend/routes/transaksi.js
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const db = require('../db');
 const { verifyToken, isUser } = require('../middleware/auth');
 const { uploadKTP, handleUploadError } = require('../middleware/upload');
+const { checkoutLimiter } = require('../middleware/limiter');
 
 const router = express.Router();
 
-// ── HELPER: hitung total biaya ────────────────────────────
 function hitungTotal(hargaPerHari, durasi) {
   return parseFloat(hargaPerHari) * parseInt(durasi);
 }
 
-// ── CREATE BOOKING (guest atau user login) ────────────────
-// Guest: tidak kirim Authorization header
-// User login: kirim token, data di-autofill dari profil
 router.post('/booking',
+  checkoutLimiter,
   uploadKTP.single('jaminan_ktp'),
   handleUploadError,
   [
     body('id_laptop').isInt({ min: 1 }),
     body('nama_penyewa').trim().isLength({ min: 3 }),
-    body('nik_penyewa').isLength({ min: 16, max: 16 }).isNumeric(),
-    body('no_hp_penyewa').trim().notEmpty(),
-    body('alamat_penyewa').trim().isLength({ min: 5 }),
+    body('nik_penyewa').notEmpty().withMessage('NIK wajib diisi'),
+    body('no_hp_penyewa').notEmpty().withMessage('Nomor HP wajib diisi'),
+    body('alamat_penyewa').notEmpty().withMessage('Alamat wajib diisi'),
     body('email_penyewa').isEmail().normalizeEmail(),
     body('tgl_mulai_sewa').isISO8601(),
     body('durasi_hari').isInt({ min: 1, max: 90 }),
-    body('payment_method').isIn(['Tunai', 'Kartu Debit/Kredit', 'DANA', 'GoPay', 'OVO'])
+    body('payment_method').optional().trim()
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -55,14 +52,20 @@ router.post('/booking',
 
     try {
       if (id_user_penyewa) {
+        const [userRows] = await db.query('SELECT foto_ktp_path FROM users WHERE id_user = ?', [id_user_penyewa]);
+        const oldKtpPath = userRows.length ? userRows[0].foto_ktp_path : null;
+
         if (!final_ktp_path) {
-          const [userRows] = await db.query('SELECT foto_ktp_path FROM users WHERE id_user = ?', [id_user_penyewa]);
-          if (userRows.length && userRows[0].foto_ktp_path) {
-            final_ktp_path = userRows[0].foto_ktp_path;
+          if (oldKtpPath) {
+            final_ktp_path = oldKtpPath;
           } else {
             return res.status(400).json({ success: false, message: 'Anda belum memiliki foto KTP di profil. Harap upload foto KTP Anda.' });
           }
         } else {
+          if (oldKtpPath) {
+            const fs = require('fs');
+            fs.unlink(oldKtpPath, (err) => { if (err) console.error('Gagal hapus KTP lama:', err); });
+          }
           await db.query('UPDATE users SET foto_ktp_path = ? WHERE id_user = ?', [final_ktp_path, id_user_penyewa]);
         }
       } else {

@@ -5,11 +5,13 @@ const { body, validationResult } = require('express-validator');
 const db        = require('../db');
 const { signToken, verifyToken } = require('../middleware/auth');
 const { uploadKTP, handleUploadError } = require('../middleware/upload');
+const { authLimiter } = require('../middleware/limiter');
 
 const router = express.Router();
 
 // ── REGISTER (user only) ──────────────────────────────────
 router.post('/register',
+  authLimiter,
   uploadKTP.single('foto_ktp'),
   handleUploadError,
   [
@@ -47,10 +49,26 @@ router.post('/register',
         [username || null, email, hashed, nama_lengkap, nik || null, no_hp, alamat || null, foto_ktp_path]
       );
 
+      const token = signToken({
+        id_user:      result.insertId,
+        email:        email,
+        role:         'user',
+        nama_lengkap: nama_lengkap
+      });
+
       res.status(201).json({
         success: true,
-        message: 'Registrasi berhasil! Silakan login.',
-        id_user: result.insertId
+        message: 'Registrasi berhasil!',
+        token,
+        user: {
+          id_user:      result.insertId,
+          email:        email,
+          role:         'user',
+          nama_lengkap: nama_lengkap,
+          no_hp:        no_hp,
+          nik:          nik || null,
+          alamat:       alamat || null
+        }
       });
     } catch (err) {
       console.error('Register error:', err);
@@ -61,6 +79,7 @@ router.post('/register',
 
 // ── LOGIN ─────────────────────────────────────────────────
 router.post('/login',
+  authLimiter,
   [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty()
@@ -75,7 +94,7 @@ router.post('/login',
 
     try {
       const [rows] = await db.query(
-        'SELECT id_user, email, password, role, nama_lengkap, no_hp, nik, alamat FROM users WHERE email = ?',
+        'SELECT id_user, username, email, password, role, nama_lengkap, no_hp, nik, alamat FROM users WHERE email = ?',
         [email]
       );
 
@@ -102,6 +121,7 @@ router.post('/login',
         token,
         user: {
           id_user:      user.id_user,
+          username:     user.username,
           email:        user.email,
           role:         user.role,
           nama_lengkap: user.nama_lengkap,
@@ -151,6 +171,15 @@ router.put('/profile', verifyToken,
     }
 
     try {
+      if (req.file) {
+        const [userRows] = await db.query('SELECT foto_ktp_path FROM users WHERE id_user = ?', [req.user.id_user]);
+        const oldKtpPath = userRows.length ? userRows[0].foto_ktp_path : null;
+        if (oldKtpPath) {
+          const fs = require('fs');
+          fs.unlink(oldKtpPath, (err) => { if (err) console.error('Gagal hapus KTP lama:', err); });
+        }
+      }
+
       const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
       const values = [...Object.values(updates), req.user.id_user];
       await db.query(`UPDATE users SET ${fields} WHERE id_user = ?`, values);

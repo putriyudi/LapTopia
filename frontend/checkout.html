@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout Sewa — LaptopRent</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Checkout Sewa — LapTopia</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <style>
     .checkout-layout {
@@ -14,6 +17,7 @@
       padding: 3rem 0 4rem;
       align-items: start;
     }
+
     .checkout-title-card {
       background: rgba(255, 255, 255, 0.72);
       border: 1px solid var(--border-color);
@@ -22,20 +26,23 @@
       margin-bottom: 1.5rem;
       box-shadow: var(--shadow-card);
     }
+
     .summary-card {
       position: sticky;
       top: 100px;
       background:
-        radial-gradient(circle at 85% 0%, rgba(96,165,250,.22), transparent 16rem),
+        radial-gradient(circle at 85% 0%, rgba(96, 165, 250, .22), transparent 16rem),
         linear-gradient(180deg, #0f172a, #111827);
       color: white;
       border: none;
     }
+
     .summary-card .card-header {
-      background: rgba(255,255,255,0.07);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.07);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       color: white;
     }
+
     .summary-row {
       display: flex;
       justify-content: space-between;
@@ -44,14 +51,16 @@
       font-size: 0.92rem;
       color: #cbd5e1;
     }
+
     .summary-row.total {
-      border-top: 1px dashed rgba(255,255,255,0.22);
+      border-top: 1px dashed rgba(255, 255, 255, 0.22);
       padding-top: 1.1rem;
       margin-top: 1.1rem;
       font-size: 1.12rem;
       font-weight: 800;
       color: white;
     }
+
     .summary-device {
       display: flex;
       gap: 1rem;
@@ -59,11 +68,12 @@
       align-items: center;
       padding: 1rem;
       border-radius: 18px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .10);
     }
+
     .summary-icon {
-      background: rgba(255,255,255,0.10);
+      background: rgba(255, 255, 255, 0.10);
       width: 52px;
       height: 52px;
       border-radius: 16px;
@@ -72,16 +82,24 @@
       justify-content: center;
       flex: 0 0 auto;
     }
+
     @media (max-width: 900px) {
-      .checkout-layout { grid-template-columns: 1fr; }
-      .summary-card { position: static; order: -1; }
+      .checkout-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-card {
+        position: static;
+        order: -1;
+      }
     }
   </style>
 </head>
+
 <body>
   <nav class="navbar">
     <div class="container">
-      <a href="/" class="logo">Laptop<span>Rent</span></a>
+      <a href="/" class="logo">Lap<span>Topia</span></a>
       <div class="nav-links">
         <a href="/katalog.html">Katalog</a>
         <a href="/dashboard-user.html">Dashboard</a>
@@ -94,14 +112,16 @@
     <div>
       <div class="checkout-title-card">
         <h2 style="font-size: 1.9rem;">Checkout Sewa</h2>
-        <p class="text-muted" id="authStatusText" style="margin-top: .35rem;">Isi form di bawah ini untuk melanjutkan penyewaan.</p>
+        <p class="text-muted" id="authStatusText" style="margin-top: .35rem;">Isi form di bawah ini untuk melanjutkan
+          penyewaan.</p>
       </div>
 
       <form id="checkoutForm" class="card" enctype="multipart/form-data">
         <div class="card-header">
           <div>
             <h3 style="font-size: 1.12rem;">Data Penyewa</h3>
-            <p class="text-muted" style="font-size: .86rem; margin-top: .25rem;">Pastikan data sesuai identitas agar proses verifikasi kasir berjalan lancar.</p>
+            <p class="text-muted" style="font-size: .86rem; margin-top: .25rem;">Pastikan data sesuai identitas agar
+              proses verifikasi kasir berjalan lancar.</p>
           </div>
         </div>
         <div class="card-body">
@@ -110,31 +130,39 @@
           <div class="grid grid-cols-2">
             <div class="form-group">
               <label class="form-label">Nama Lengkap</label>
-              <input type="text" id="nama_penyewa" name="nama_penyewa" class="form-control" required autocomplete="name">
+              <input type="text" id="nama_penyewa" name="nama_penyewa" class="form-control" required
+                autocomplete="name">
             </div>
             <div class="form-group">
               <label class="form-label">NIK KTP</label>
-              <input type="text" id="nik_penyewa" name="nik_penyewa" class="form-control" required minlength="16" maxlength="16" inputmode="numeric">
+              <input type="text" id="nik_penyewa" name="nik_penyewa" class="form-control" required minlength="16"
+                maxlength="16" inputmode="numeric">
             </div>
             <div class="form-group">
               <label class="form-label">No. HP / WhatsApp</label>
-              <input type="tel" id="no_hp_penyewa" name="no_hp_penyewa" class="form-control" required autocomplete="tel">
+              <input type="tel" id="no_hp_penyewa" name="no_hp_penyewa" class="form-control" required
+                autocomplete="tel">
             </div>
             <div class="form-group">
               <label class="form-label">Email</label>
-              <input type="email" id="email_penyewa" name="email_penyewa" class="form-control" required autocomplete="email">
+              <input type="email" id="email_penyewa" name="email_penyewa" class="form-control" required
+                autocomplete="email">
             </div>
           </div>
 
           <div class="form-group mt-1">
             <label class="form-label">Alamat Pengiriman / Domisili</label>
-            <input type="text" id="alamat_penyewa" name="alamat_penyewa" class="form-control" required autocomplete="street-address">
+            <input type="text" id="alamat_penyewa" name="alamat_penyewa" class="form-control" required
+              autocomplete="street-address">
           </div>
 
           <div id="guestKtpSection" class="form-group mt-3 secure-upload-box">
-            <label class="form-label" style="color: var(--primary-color);">Upload Foto KTP Asli (Sebagai Jaminan)</label>
-            <input type="file" id="jaminan_ktp" name="jaminan_ktp" class="form-control" accept="image/jpeg, image/png, image/jpg" style="background: white; margin-bottom: 0.65rem;">
-            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Data KTP digunakan untuk verifikasi penyewaan dan harus diakses melalui sistem yang terproteksi.</p>
+            <label class="form-label" style="color: var(--primary-color);">Upload Foto KTP Asli (Sebagai
+              Jaminan)</label>
+            <input type="file" id="jaminan_ktp" name="jaminan_ktp" class="form-control"
+              accept="image/jpeg, image/png, image/jpg" style="background: white; margin-bottom: 0.65rem;">
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">Data KTP digunakan untuk verifikasi
+              penyewaan dan harus diakses melalui sistem yang terproteksi.</p>
           </div>
 
           <h3 class="section-divider-title">Detail Sewa & Pembayaran</h3>
@@ -145,21 +173,12 @@
             </div>
             <div class="form-group">
               <label class="form-label">Durasi (Hari)</label>
-              <input type="number" id="durasi_hari" name="durasi_hari" class="form-control" required min="1" max="90" value="1" oninput="calcTotal()">
+              <input type="number" id="durasi_hari" name="durasi_hari" class="form-control" required min="1" max="90"
+                value="1" oninput="calcTotal()">
             </div>
           </div>
-          <div class="form-group mt-3">
-            <label class="form-label">Metode Pembayaran</label>
-            <select name="payment_method" id="payment_method" class="form-control" required>
-              <option value="">-- Pilih Metode Pembayaran --</option>
-              <option value="Tunai">Tunai (Bayar di Toko)</option>
-              <option value="Kartu Debit/Kredit">Kartu Debit/Kredit</option>
-              <option value="DANA">DANA</option>
-              <option value="GoPay">GoPay</option>
-              <option value="OVO">OVO</option>
-            </select>
-            <span class="form-text">Pembayaran akan dikonfirmasi oleh kasir sesuai metode yang dipilih.</span>
-          </div>
+          <!-- Pilihan metode pembayaran dihapus, user akan memilih di popup Midtrans -->
+          <input type="hidden" name="payment_method" value="Midtrans">
         </div>
       </form>
     </div>
@@ -172,7 +191,11 @@
         <div class="card-body">
           <div class="summary-device">
             <div class="summary-icon">
-              <svg fill="none" stroke="white" viewBox="0 0 24 24" style="width: 25px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              <svg fill="none" stroke="white" viewBox="0 0 24 24" style="width: 25px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                </path>
+              </svg>
             </div>
             <div>
               <div style="font-weight: 800; font-size: 1.1rem;" id="sum_merk">Memuat...</div>
@@ -194,7 +217,9 @@
             <span id="sum_total_price">Rp 0</span>
           </div>
 
-          <button class="btn btn-primary mt-4" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--success), var(--success-dark)); border: none;" onclick="submitCheckout()">
+          <button id="btn-submit" class="btn btn-primary mt-4"
+            style="width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--success), var(--success-dark)); border: none;"
+            onclick="submitCheckout()">
             Lanjut Pembayaran
           </button>
         </div>
@@ -202,8 +227,11 @@
     </div>
   </main>
 
-  <script id="midtransScript"></script>
   <script src="/js/api.js"></script>
+  <script type="text/javascript"
+    src="https://app.sandbox.midtrans.com/snap/snap.js"
+    data-client-key="Mid-client-AMkLvCOthuWIdjpo"></script>
   <script src="/js/checkout.js"></script>
 </body>
+
 </html>

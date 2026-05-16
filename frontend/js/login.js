@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
       setAuth(res.data.token, res.data.user);
       showToast('Login berhasil!', 'success');
       setTimeout(() => {
-        if (res.data.user.role === 'admin') window.location.href = '/dashboard-admin.html';
-        else if (res.data.user.role === 'kasir') window.location.href = '/dashboard-kasir.html';
-        else window.location.href = '/dashboard-user.html';
+        if (res.data.user.role === 'admin') window.location.href = '/admin/';
+        else if (res.data.user.role === 'kasir') window.location.href = '/kasir/';
+        else window.location.href = '/index.html';
       }, 1500);
     } else {
       showToast(res.data.message || 'Login gagal', 'error');

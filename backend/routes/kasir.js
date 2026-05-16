@@ -20,6 +20,10 @@ router.get('/bookings', verifyToken, isKasir, async (req, res) => {
       where.push('t.status_transaksi = ?');
       params.push(status);
     }
+    if (req.query.search) {
+      where.push('t.nama_penyewa LIKE ?');
+      params.push(`%${req.query.search}%`);
+    }
 
     const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
 
@@ -241,13 +245,46 @@ router.post('/pengembalian/:id_transaksi', verifyToken, isKasir, async (req, res
 // ── LIHAT KTP (Protected Blob URL) ────────────────────────
 router.get('/ktp/:id_transaksi', verifyToken, isKasir, async (req, res) => {
   try {
+    const { otp } = req.query;
+    if (!otp) {
+        return res.status(403).json({ success: false, message: 'OTP diperlukan untuk melihat KTP.' });
+    }
+
+    // Validasi OTP
+    const [otpRows] = await db.query(
+        'SELECT * FROM otp_ktp WHERE otp_code = ? AND target_role = ? AND is_used = 0 AND created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)',
+        [otp, req.user.role]
+    );
+
+    if (!otpRows.length) {
+        return res.status(401).json({ success: false, message: 'OTP tidak valid atau kedaluwarsa.' });
+    }
+
+    // Tandai OTP sebagai digunakan
+    await db.query('UPDATE otp_ktp SET is_used = 1 WHERE id = ?', [otpRows[0].id]);
+
     const [rows] = await db.query('SELECT jaminan_file_path FROM transaksi WHERE id_transaksi = ?', [req.params.id_transaksi]);
     if (!rows.length || !rows[0].jaminan_file_path) {
       return res.status(404).json({ success: false, message: 'KTP tidak ditemukan.' });
     }
-    const filePath = path.join(__dirname, '../../', rows[0].jaminan_file_path);
+
+    const fs = require('fs');
+    let storedPath = rows[0].jaminan_file_path;
+    let filePath;
+    
+    if (path.isAbsolute(storedPath)) {
+      filePath = storedPath;
+    } else {
+      filePath = path.join(__dirname, '../../', storedPath);
+    }
+    
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found:', filePath);
+      return res.status(404).json({ success: false, message: 'File tidak ditemukan di disk.' });
+    }
     res.sendFile(filePath);
   } catch (err) {
+    console.error('KTP view error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 });

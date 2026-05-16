@@ -4,7 +4,6 @@ require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express    = require('express');
 const cors       = require('cors');
 const helmet     = require('helmet');
-const rateLimit  = require('express-rate-limit');
 const path       = require('path');
 const fs         = require('fs');
 
@@ -12,6 +11,18 @@ const app = express();
 
 // ── SECURITY MIDDLEWARE ───────────────────────────────────
 app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://app.sandbox.midtrans.com"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      frameSrc: ["'self'", "https://app.sandbox.midtrans.com"],
+      connectSrc: ["'self'", "https://app.sandbox.midtrans.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://*"],
+    },
+  },
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
@@ -22,22 +33,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiter global
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 menit
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: 'Terlalu banyak request. Coba lagi setelah 15 menit.' }
-}));
-
-// Rate limiter ketat untuk auth
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { success: false, message: 'Terlalu banyak percobaan login. Coba lagi setelah 15 menit.' }
-});
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -45,17 +40,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Frontend pages (publik)
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// ⚠️  PENTING: Upload & contracts TIDAK diekspos publik lewat static!
-// Akses hanya via endpoint protected di bawah
-
 // ── API ROUTES ────────────────────────────────────────────
-// app.use('/api/auth',      authLimiter); // Dinonaktifkan sementara untuk testing
 app.use('/api/auth',      require('./routes/auth'));
 app.use('/api/laptops',   require('./routes/laptops'));
 app.use('/api/transaksi', require('./routes/transaksi'));
 app.use('/api/kasir',     require('./routes/kasir'));
 app.use('/api/admin',     require('./routes/admin'));
 app.use('/api/payment',   require('./routes/payment'));
+app.use('/api/otp',       require('./routes/otp'));
 
 // ── PROTECTED FILE ENDPOINTS ──────────────────────────────
 const { verifyToken, isKasir, isAdmin } = require('./middleware/auth');

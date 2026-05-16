@@ -1,25 +1,6 @@
 /* frontend/js/dashboard-user.js */
 
-/**
- * Fungsi logout global agar tetap bisa dipanggil jika ada elemen HTML 
- * yang masih menggunakan atribut onclick.
- */
-window.logout = function() {
-    if (confirm('Apakah Anda yakin ingin keluar dari LaptopRent?')) {
-        // Menghapus data dari localStorage
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        
-        if (typeof showToast === 'function') {
-            showToast('Berhasil keluar. Sampai jumpa!', 'success');
-        }
 
-        // Redirect ke halaman utama
-        setTimeout(() => {
-            window.location.href = '/index.html';
-        }, 800);
-    }
-};
 
 document.addEventListener('DOMContentLoaded', () => {
     /**

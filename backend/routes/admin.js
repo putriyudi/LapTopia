@@ -164,6 +164,10 @@ router.get('/laporan', verifyToken, isAdmin, async (req, res) => {
     if (dari) { where.push('t.created_at >= ?'); params.push(dari + ' 00:00:00'); }
     if (sampai) { where.push('t.created_at <= ?'); params.push(sampai + ' 23:59:59'); }
     if (status) { where.push('t.status_transaksi = ?'); params.push(status); }
+    if (req.query.search) {
+      where.push('t.nama_penyewa LIKE ?');
+      params.push(`%${req.query.search}%`);
+    }
 
     const whereStr = 'WHERE ' + where.join(' AND ');
 
@@ -204,20 +208,41 @@ router.get('/laporan', verifyToken, isAdmin, async (req, res) => {
 // ── GET SEMUA TRANSAKSI (ringkas) ─────────────────────────
 router.get('/transaksi', verifyToken, isAdmin, async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, search } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
-    const [[{ total }]] = await db.query('SELECT COUNT(*) AS total FROM transaksi');
+    let where = [];
+    let params = [];
+    if (search) {
+      where.push('t.nama_penyewa LIKE ?');
+      params.push(`%${search}%`);
+    }
+    const whereStr = where.length ? 'WHERE ' + where.join(' AND ') : '';
+
+    const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM transaksi t ${whereStr}`, params);
     const [rows] = await db.query(
       `SELECT t.id_transaksi, t.nama_penyewa, t.email_penyewa, l.merk_tipe,
               t.total_biaya, t.status_transaksi, t.payment_status, t.created_at
        FROM transaksi t JOIN laptops l ON l.id_laptop = t.id_laptop
+       ${whereStr}
        ORDER BY t.created_at DESC LIMIT ? OFFSET ?`,
-      [Number(limit), offset]
+      [...params, Number(limit), offset]
     );
     res.json({ success: true, data: rows, pagination: { total } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
+
+
+// -- HAPUS TRANSAKSI (admin only) --------------------------
+router.delete('/transaksi/:id', verifyToken, isAdmin, async (req, res) => {
+  try {
+    await db.query('DELETE FROM transaksi WHERE id_transaksi = ?', [req.params.id]);
+    res.json({ success: true, message: 'Laporan transaksi berhasil dihapus.' });
+  } catch (err) {
+    console.error('Delete transaksi error:', err);
+    res.status(500).json({ success: false, message: 'Gagal menghapus transaksi.' });
   }
 });
 

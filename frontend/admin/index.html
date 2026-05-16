@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — LaptopRent</title>
+  <title>Admin Dashboard — LapTopia</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -11,7 +11,7 @@
   <div class="dashboard-layout">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <a href="/" class="logo" style="font-size: 1.2rem;">Laptop<span>Rent</span> Admin</a>
+        <a href="/" class="logo" style="font-size: 1.2rem;">Lap<span>Topia</span> Admin</a>
         <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.45rem;">Management Panel</div>
       </div>
       <nav class="sidebar-nav">
@@ -20,6 +20,7 @@
         <a href="#" class="sidebar-link">Kelola User</a>
         <a href="#" class="sidebar-link">Laporan Transaksi</a>
         <a href="#" class="sidebar-link">Laporan Keamanan</a>
+        <a href="#" class="sidebar-link">Otorisasi KTP</a>
         <a href="/" class="sidebar-link" target="_blank">Lihat Website</a>
         <a href="#" class="sidebar-link" style="color: #fca5a5; margin-top: auto;" onclick="logout();return false;">Logout</a>
       </nav>
@@ -92,9 +93,10 @@
                 <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Pantau transaksi berdasarkan tanggal dan status sewa.</p>
               </div>
               <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <input type="text" id="search_laporan" placeholder="Cari nama..." class="form-control" style="width:180px" onkeyup="loadLaporan()">
                 <input type="date" id="filter_dari" class="form-control" style="width:150px">
                 <input type="date" id="filter_sampai" class="form-control" style="width:150px">
-                <select id="filter_status" class="form-control" style="width:145px">
+                <select id="filter_status" class="form-control" style="width:145px" onchange="loadLaporan()">
                   <option value="">Semua Status</option>
                   <option value="Selesai">Selesai</option>
                   <option value="Aktif">Aktif</option>
@@ -133,6 +135,37 @@
                     <tr><td>#PT-002</td><td>SecTeam</td><td><span class="badge badge-primary">Low</span></td><td><span class="badge badge-success">Closed</span></td></tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-otp" style="display: none;">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 style="font-size: 1.12rem;">Otorisasi Akses KTP</h3>
+                <p class="text-muted" style="font-size: .85rem; margin-top: .25rem;">Generate One-Time Password (OTP) untuk membuka akses melihat foto KTP penyewa.</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="card bg-muted">
+                  <div class="card-body text-center">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 1rem;">OTP untuk Admin</h4>
+                    <button class="btn btn-primary" onclick="generateOTP('admin')">Generate OTP Admin</button>
+                    <div id="otp-admin-display" style="margin-top: 1.5rem; font-size: 2rem; font-weight: 800; letter-spacing: 0.2em; color: var(--primary);">------</div>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Berlaku 10 menit, 1x pakai.</p>
+                  </div>
+                </div>
+                <div class="card bg-muted">
+                  <div class="card-body text-center">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 1rem;">OTP untuk Kasir</h4>
+                    <button class="btn btn-outline" onclick="generateOTP('kasir')">Generate OTP Kasir</button>
+                    <div id="otp-kasir-display" style="margin-top: 1.5rem; font-size: 2rem; font-weight: 800; letter-spacing: 0.2em; color: #64748b;">------</div>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.5rem;">Diberikan kepada kasir jika perlu verifikasi KTP.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -180,6 +213,41 @@
         <div class="form-group"><label>Password</label><input type="password" id="kas_pass" class="form-control" required></div>
         <button class="btn btn-primary" style="width:100%" onclick="submitKasir()">Buat Kasir</button>
       </div>
+    </div>
+  </div>
+  <div id="modalDetail" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div class="card" style="width: 500px; position:relative;">
+      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalDetail')">✕</button>
+      <div class="card-header"><h3>Detail Lengkap Penyewa</h3></div>
+      <div class="card-body">
+        <div id="detailContent">
+          <!-- Diisi via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom OTP Input Modal -->
+  <div id="modalOTP" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:10000; justify-content:center; align-items:center;">
+    <div class="card" style="width: 320px; text-align: center; padding: 2rem;">
+      <img src="https://cdn-icons-png.flaticon.com/512/2550/2550371.png" style="width: 64px; margin: 0 auto 1.5rem;">
+      <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Verifikasi Keamanan</h3>
+      <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;">Masukkan 6 digit OTP untuk membuka akses foto KTP.</p>
+      <input type="text" id="otp_input" class="form-control" placeholder="••••••" maxlength="6" style="text-align: center; font-size: 1.5rem; letter-spacing: 0.3em; margin-bottom: 1.5rem; height: 50px;">
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-outline" style="flex: 1" onclick="closeModal('modalOTP')">Batal</button>
+        <button class="btn btn-primary" style="flex: 1" id="btnConfirmOTP">Buka</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zoom/Lightbox Modal -->
+  <div id="modalZoom" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.9); z-index:10001; justify-content:center; align-items:center; cursor: zoom-out;" onclick="closeModal('modalZoom')">
+    <img id="zoomImg" src="" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 4px; transition: transform 0.2s; cursor: grab;" onclick="event.stopPropagation()">
+    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 1rem; background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; border-radius: 20px;">
+        <button class="btn" style="color: white; border: none; padding: 0;" onclick="zoomImage(0.2); event.stopPropagation()">➕</button>
+        <button class="btn" style="color: white; border: none; padding: 0;" onclick="zoomImage(-0.2); event.stopPropagation()">➖</button>
+        <button class="btn" style="color: white; border: none; padding: 0;" onclick="resetZoom(); event.stopPropagation()">🔄</button>
     </div>
   </div>
   <script src="/js/api.js"></script>

@@ -15,10 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Register response:', res);
     
     if (res.status === 201) {
-      showToast('Registrasi berhasil! Silakan login.', 'success');
+      showToast('Registrasi berhasil!', 'success');
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
       setTimeout(() => {
-        window.location.href = '/login.html';
-      }, 2000);
+        window.location.href = '/index.html';
+      }, 1000);
     } else {
       if (res.data.errors && res.data.errors.length > 0) {
         // Tampilkan semua validation errors
