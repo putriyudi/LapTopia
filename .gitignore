@@ -1,18 +1,71 @@
-# Mengabaikan folder library (ukurannya sangat besar)
+# ==========================================
+# Dependencies / library
+# ==========================================
 node_modules/
 
-# Mengabaikan file konfigurasi sensitif (password DB, API key, dll)
+# ==========================================
+# Environment & secret files
+# Jangan push file yang berisi password DB, JWT secret, API key, token Midtrans, dll.
+# ==========================================
 .env
+.env.*
+!.env.example
 
-# Mengabaikan isi folder uploads (foto KTP, dll)
-# Tapi tetap menyisakan foldernya agar tidak error saat di-clone
+# ==========================================
+# Uploads / private user files
+# Foto KTP dan file user jangan dipush ke GitHub
+# Folder tetap dipertahankan dengan .gitkeep
+# ==========================================
+uploads/*
+!uploads/.gitkeep
+
 uploads/ktp/*
 !uploads/ktp/.gitkeep
 
-# Mengabaikan file log
+# ==========================================
+# Private generated files
+# Kontrak digital PDF jangan dipush ke GitHub
+# Folder tetap dipertahankan dengan .gitkeep
+# ==========================================
+contracts/*
+!contracts/.gitkeep
+
+# Kalau project menyimpan kontrak di folder lain, ini juga diamankan
+backend/contracts/*
+!backend/contracts/.gitkeep
+
+private/*
+!private/.gitkeep
+
+storage/*
+!storage/.gitkeep
+
+# ==========================================
+# Logs
+# ==========================================
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Mengabaikan folder OS
+# ==========================================
+# OS files
+# ==========================================
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ==========================================
+# Editor / IDE
+# ==========================================
+.vscode/
+.idea/
+
+# ==========================================
+# Build / cache
+# ==========================================
+dist/
+build/
+.cache/
+coverage/
