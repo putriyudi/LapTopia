@@ -1,25 +1,6 @@
 /* frontend/js/dashboard-user.js */
 
-/**
- * Fungsi logout global agar tetap bisa dipanggil jika ada elemen HTML 
- * yang masih menggunakan atribut onclick.
- */
-window.logout = function() {
-    if (confirm('Apakah Anda yakin ingin keluar dari LaptopRent?')) {
-        // Menghapus data dari localStorage
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        
-        if (typeof showToast === 'function') {
-            showToast('Berhasil keluar. Sampai jumpa!', 'success');
-        }
 
-        // Redirect ke halaman utama
-        setTimeout(() => {
-            window.location.href = '/index.html';
-        }, 800);
-    }
-};
 
 document.addEventListener('DOMContentLoaded', () => {
     /**
@@ -72,7 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
         profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(profileForm);
-            
+
+            // Validasi NIK jika diisi: harus 16 digit angka
+            const nikVal = formData.get('nik');
+            if (nikVal && nikVal.trim() !== '') {
+                if (!/^\d{16}$/.test(nikVal.trim())) {
+                    showToast('NIK harus berupa 16 digit angka.', 'warning');
+                    document.getElementById('prof_nik')?.focus();
+                    return;
+                }
+            } else {
+                formData.delete('nik'); // jangan kirim jika kosong
+            }
+
             // Validasi file: Jangan kirim foto_ktp jika input file kosong
             const ktpField = formData.get('foto_ktp');
             if (ktpField && ktpField.size === 0) {
@@ -82,12 +75,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof showLoader === 'function') showLoader();
             const res = await apiCall('/auth/profile', 'PUT', formData, true);
             if (typeof hideLoader === 'function') hideLoader();
-            
+
             if (res && res.status === 200) {
                 showToast('Profil berhasil diperbarui.', 'success');
-                loadProfileData(); 
+                loadProfileData();
             } else {
                 showToast(res?.data?.message || 'Gagal memperbarui profil.', 'error');
+            }
+        });
+    }
+
+    // Tombol hapus foto KTP
+    const btnHapusKtp = document.getElementById('btn-hapus-ktp');
+    if (btnHapusKtp) {
+        btnHapusKtp.addEventListener('click', async () => {
+            if (!confirm('Yakin hapus foto KTP dari profil?')) return;
+            if (typeof showLoader === 'function') showLoader();
+            const res = await apiCall('/auth/profile/ktp', 'DELETE');
+            if (typeof hideLoader === 'function') hideLoader();
+            if (res && res.status === 200) {
+                showToast('Foto KTP berhasil dihapus.', 'success');
+                loadProfileData();
+            } else {
+                showToast(res?.data?.message || 'Gagal menghapus KTP.', 'error');
             }
         });
     }
@@ -205,18 +215,21 @@ async function loadRiwayat() {
 
         data.forEach(trx => {
             const statusClass = trx.status_transaksi?.toLowerCase() === 'aktif' ? 'success' : 'info';
+            const kontrakCell = trx.file_pdf_path
+                ? `<button class="btn btn-outline" style="padding:0.25rem 0.6rem; font-size:0.78rem; white-space:nowrap;" onclick="lihatKontrakUser(${trx.id_transaksi})">📄 Lihat Kontrak</button>`
+                : `<span style="font-size:0.8rem; color:#94a3b8;">Belum tersedia</span>`;
             tbody.innerHTML += `
                 <tr>
                     <td>#${trx.id_transaksi}</td>
                     <td>
                         <div style="font-weight:600;">${trx.merk_tipe}</div>
-                        <div style="font-size:0.8rem; color:#64748b">Total: ${formatRupiah(trx.total_biaya)}</div>
+                        <div style="font-size:0.8rem; color:#64748b;">Total: ${formatRupiah(trx.total_biaya)}</div>
                     </td>
                     <td>${formatDate(trx.tgl_mulai_sewa)}</td>
                     <td>${trx.durasi_hari} Hari</td>
                     <td><span class="badge ${trx.payment_status === 'paid' ? 'success' : 'warning'}">${(trx.payment_status || 'pending').toUpperCase()}</span></td>
                     <td><span class="badge ${statusClass}">${trx.status_transaksi || 'Proses'}</span></td>
-                    <td>${trx.file_pdf_path ? `<button class="btn btn-outline" style="padding:0.2rem 0.5rem; font-size:0.8rem" onclick="lihatKontrakUser(${trx.id_transaksi})">Unduh PDF</button>` : '-'}</td>
+                    <td>${kontrakCell}</td>
                 </tr>
             `;
         });
@@ -232,15 +245,23 @@ async function loadProfileData() {
     const res = await apiCall('/auth/profile');
     if (res && res.status === 200) {
         const u = res.data.data;
-        const mapping = {
-            'prof_nama': u.nama_lengkap,
-            'prof_hp': u.no_hp,
-            'prof_alamat': u.alamat || ''
-        };
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+        setVal('prof_nama',   u.nama_lengkap);
+        setVal('prof_nik',    u.nik);
+        setVal('prof_hp',     u.no_hp);
+        setVal('prof_alamat', u.alamat);
 
-        for (const [id, value] of Object.entries(mapping)) {
-            const input = document.getElementById(id);
-            if (input) input.value = value;
+        // Status KTP
+        const ktpInfo  = document.getElementById('ktp-status-info');
+        const btnHapus = document.getElementById('btn-hapus-ktp');
+        if (ktpInfo) {
+            if (u.foto_ktp_path) {
+                ktpInfo.innerHTML = '<span style="color:#16a34a; font-weight:600;">✓ Foto KTP sudah tersimpan di profil.</span> Upload file baru untuk mengganti.';
+                if (btnHapus) btnHapus.style.display = 'inline-block';
+            } else {
+                ktpInfo.innerHTML = '<span style="color:#d97706; font-weight:600;">⚠ Foto KTP belum ada.</span> Upload untuk mempercepat proses checkout.';
+                if (btnHapus) btnHapus.style.display = 'none';
+            }
         }
     }
 }

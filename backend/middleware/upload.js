@@ -6,12 +6,11 @@ const crypto = require('crypto');
 
 const MAX_SIZE = (parseInt(process.env.MAX_FILE_SIZE_MB) || 5) * 1024 * 1024;
 
-// Pastikan folder ada
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-// Storage engine — simpan ke /uploads/ktp/ dengan nama random
+// ── Storage: KTP (protected) ─────────────────────────────────
 const ktpStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = path.join(__dirname, '../../uploads/ktp');
@@ -19,14 +18,35 @@ const ktpStorage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    // Nama file: random hex agar tidak bisa ditebak
     const rand = crypto.randomBytes(16).toString('hex');
     const ext  = path.extname(file.originalname).toLowerCase();
     cb(null, `ktp_${rand}${ext}`);
   }
 });
 
-// Filter — hanya gambar
+// ── Storage: Foto Laptop (public) ────────────────────────────
+const laptopStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '../../uploads/laptops');
+    ensureDir(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const rand = crypto.randomBytes(16).toString('hex');
+    const ext  = path.extname(file.originalname).toLowerCase();
+    cb(null, `laptop_${rand}${ext}`);
+  }
+});
+
+// Patch: override req.file.path ke relative setelah multer selesai
+function toRelativePath(req, res, next) {
+  if (req.file) {
+    const projectRoot = path.join(__dirname, '../..');
+    req.file.path = path.relative(projectRoot, req.file.path);
+  }
+  next();
+}
+
 function imageFilter(req, file, cb) {
   const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
   const ext = path.extname(file.originalname).toLowerCase();
@@ -39,11 +59,34 @@ function imageFilter(req, file, cb) {
   cb(null, true);
 }
 
-const uploadKTP = multer({
+// ── Upload KTP ────────────────────────────────────────────────
+const _uploadKTP = multer({
   storage: ktpStorage,
   fileFilter: imageFilter,
   limits: { fileSize: MAX_SIZE }
 });
+
+const uploadKTP = {
+  single: (fieldName) => [
+    _uploadKTP.single(fieldName),
+    toRelativePath
+  ]
+};
+
+// ── Upload Foto Laptop ────────────────────────────────────────
+const _uploadLaptop = multer({
+  storage: laptopStorage,
+  fileFilter: imageFilter,
+  limits: { fileSize: MAX_SIZE }
+});
+
+// Middleware tunggal (bukan array), sudah include toRelativePath
+function uploadLaptopSingle(fieldName) {
+  return [
+    _uploadLaptop.single(fieldName),
+    toRelativePath
+  ];
+}
 
 // Error handler untuk Multer
 function handleUploadError(err, req, res, next) {
@@ -62,4 +105,4 @@ function handleUploadError(err, req, res, next) {
   next();
 }
 
-module.exports = { uploadKTP, handleUploadError };
+module.exports = { uploadKTP, uploadLaptopSingle, handleUploadError };
