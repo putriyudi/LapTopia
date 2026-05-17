@@ -1,6 +1,3 @@
-// reset-default-passwords.js
-// Script to reset Admin and Kasir passwords to default and hash them properly.
-
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 const mysql = require('mysql2/promise');

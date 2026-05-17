@@ -14,12 +14,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc:  ["'self'", "'unsafe-inline'", "https://app.sandbox.midtrans.com", "https://app.midtrans.com"],
+      scriptSrc:  ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://app.sandbox.midtrans.com", "https://app.midtrans.com", "https://cdn.jsdelivr.net"],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc:   ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc:    ["'self'", "https://fonts.gstatic.com"],
       frameSrc:   ["'self'", "https://app.sandbox.midtrans.com", "https://app.midtrans.com"],
-      connectSrc: ["'self'", "https://app.sandbox.midtrans.com", "https://app.midtrans.com"],
+      connectSrc: ["'self'", "blob:", "https://app.sandbox.midtrans.com", "https://app.midtrans.com", "https://cdn.jsdelivr.net"],
       imgSrc:     ["'self'", "data:", "blob:", "https://*"],
     },
   },

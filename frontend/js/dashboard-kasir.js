@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab('pos', link);
       } else if (id === 'link-otp') {
         switchTab('otp', link);
+      } else if (id === 'link-yolo') {
+        switchTab('yolo', link);
       }
     });
   });
@@ -28,9 +30,22 @@ function switchTab(tabId, activeLink) {
   
   const titles = {
     'pos': 'Manajemen Transaksi POS',
-    'otp': 'Otorisasi Akses KTP'
+    'otp': 'Otorisasi Akses KTP',
+    'yolo': 'Deteksi Keaslian Rupiah AI'
   };
   document.getElementById('pageTitle').innerText = titles[tabId];
+
+  // Stop camera if leaving the YOLO tab to save battery and webcam locks
+  if (tabId !== 'yolo') {
+    if (typeof stopCamera === 'function') {
+      stopCamera();
+    }
+  } else {
+    // If opening the YOLO tab, initialize model if not done yet
+    if (typeof initYolo === 'function') {
+      initYolo();
+    }
+  }
 }
 
 let searchTimeout;
@@ -105,10 +120,7 @@ async function loadBookings() {
 // Fungsi Lihat Detail Lengkap (Pop-up)
 window.lihatDetail = async function(id) {
     showLoader();
-    const res = await apiCall(`/kasir/bookings?id=${id}`); // Gunakan endpoint yang sama tapi filter by ID jika mungkin, atau cari di data lokal
-    // Namun karena endpoint /bookings mereturn array, kita cari di sana
-    // Atau kita buat endpoint baru. Tapi sementara kita ambil dari list yang ada
-    const resDetail = await apiCall(`/kasir/bookings`); // Re-fetch to be safe or find in existing
+    const resDetail = await apiCall(`/kasir/bookings`); 
     hideLoader();
     
     if(resDetail && resDetail.status === 200) {
@@ -116,37 +128,35 @@ window.lihatDetail = async function(id) {
         if(!trx) return showToast("Data tidak ditemukan", "error");
         
         const content = document.getElementById('detailContent');
-        const token = localStorage.getItem('token');
+        
+        // Desain dibikin lebih minimalis dan fokus ke data penting (No TMI)
         content.innerHTML = `
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
                 <div>
-                    <p><strong>ID Transaksi:</strong> #${trx.id_transaksi}</p>
+                    <h5 style="color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Info Pelanggan</h5>
                     <p><strong>Nama:</strong> ${trx.nama_penyewa}</p>
+                    <p><strong>Kontak:</strong> ${trx.no_hp_penyewa}</p>
                     <p><strong>NIK:</strong> ${trx.nik_penyewa}</p>
-                    <p><strong>No HP:</strong> ${trx.no_hp_penyewa}</p>
-                    <p><strong>Email:</strong> ${trx.email_penyewa}</p>
-                    <p><strong>Alamat:</strong> ${trx.alamat_penyewa}</p>
                 </div>
                 <div>
-                    <p><strong>Laptop:</strong> ${trx.merk_tipe}</p>
-                    <p><strong>SN:</strong> ${trx.nomor_seri}</p>
-                    <p><strong>Tgl Sewa:</strong> ${formatJustDate(trx.tgl_mulai_sewa)}</p>
+                    <h5 style="color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Info Sewa</h5>
+                    <p><strong>Unit:</strong> ${trx.merk_tipe}</p>
                     <p><strong>Durasi:</strong> ${trx.durasi_hari} Hari</p>
                     <p><strong>Total:</strong> ${formatRupiah(trx.total_biaya)}</p>
                 </div>
             </div>
-            <hr style="margin: 1rem 0; border-top: 1px solid var(--border-color);">
-            <p style="margin-bottom: 0.5rem;"><strong>Foto KTP / Jaminan:</strong></p>
-            <div style="position:relative; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; overflow: hidden; min-height: 200px; display: flex; align-items: center; justify-content: center;">
-                <img id="detailKtpImg" src="" 
-                     style="width: 100%; height: 220px; object-fit: cover; border-radius: 10px; cursor: zoom-in; display: none;">
+            
+            <hr style="margin: 1.25rem 0; border-top: 1px solid var(--border-color);">
+            
+            <div style="position:relative; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; min-height: 180px; display: flex; align-items: center; justify-content: center;">
+                <img id="detailKtpImg" src="" style="width: 100%; height: 200px; object-fit: cover; cursor: zoom-in; display: none;">
                 <div id="ktpPlaceholder" style="text-align: center; padding: 2rem;">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2550/2550371.png" style="width: 42px; margin: 0 auto 0.75rem; opacity: 0.6;">
-                    <p style="font-size: 0.8rem; color: #64748b; font-weight: 600; margin-bottom: 1rem;">Akses Terkunci</p>
-                    <button class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;" onclick="openOTPModal(${trx.id_transaksi})">Input OTP</button>
+                    <p style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.8rem;">Otorisasi Diperlukan</p>
+                    <button class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.8rem;" onclick="openOTPModal(${trx.id_transaksi})">Masukkan Kode OTP</button>
                 </div>
             </div>
-            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+            
+            <div style="margin-top: 1.5rem; text-align: right;">
                 <button class="btn btn-outline" onclick="closeModal('modalDetail')">Tutup</button>
             </div>
         `;
