@@ -36,24 +36,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Logika Autofill & Validasi KTP
     const ktpSection = document.getElementById('guestKtpSection');
-    const ktpInput = document.getElementById('jaminan_ktp');
+    const ktpInput   = document.getElementById('jaminan_ktp');
 
     if (authData && authData.user.role === 'user') {
-        const u = authData.user;
-        document.getElementById('nama_penyewa').value = u.nama_lengkap;
-        document.getElementById('nik_penyewa').value = u.nik || '';
-        document.getElementById('no_hp_penyewa').value = u.no_hp;
-        document.getElementById('email_penyewa').value = u.email;
-        document.getElementById('alamat_penyewa').value = u.alamat || '';
+        // Load profil terbaru dari server (agar foto_ktp_path terbaca)
+        const resProfile = await apiCall('/auth/profile');
+        const profileData = (resProfile && resProfile.status === 200) ? resProfile.data.data : null;
+        const u = profileData || authData.user;
 
-        // Buat KTP opsional, tapi tetap tampilkan form-nya untuk opsi update
+        document.getElementById('nama_penyewa').value  = u.nama_lengkap || '';
+        document.getElementById('nik_penyewa').value   = u.nik          || '';
+        document.getElementById('no_hp_penyewa').value = u.no_hp        || '';
+        document.getElementById('email_penyewa').value = u.email        || '';
+        document.getElementById('alamat_penyewa').value = u.alamat      || '';
+
+        // Buat KTP opsional
         ktpInput.removeAttribute('required');
-        const ktpLabel = document.querySelector('#guestKtpSection label');
-        if (ktpLabel) ktpLabel.innerHTML = 'Update Foto KTP Asli (Opsional jika sudah ada di profil)';
-        document.getElementById('authStatusText').innerHTML = `Login sebagai <strong>${u.nama_lengkap}</strong>. Data otomatis terisi.`;
+
+        // Tampilkan status KTP tersimpan
+        const hasKtp    = !!(u.foto_ktp_path);
+        const ktpLabel  = document.querySelector('#guestKtpSection label');
+        if (ktpLabel) {
+            if (hasKtp) {
+                ktpLabel.innerHTML = '📎 Ganti Foto KTP <span style="font-size:0.78rem;color:#16a34a;font-weight:600;">(KTP sudah tersimpan di profil — upload baru untuk mengganti)</span>';
+            } else {
+                ktpLabel.innerHTML = '📎 Upload Foto KTP Asli <span style="font-size:0.78rem;color:#d97706;font-weight:600;">(Belum ada di profil — upload sekarang)</span>';
+            }
+        }
+        document.getElementById('authStatusText').innerHTML =
+            `Login sebagai <strong>${u.nama_lengkap}</strong>. Data otomatis terisi.` +
+            (hasKtp ? ' <span style="color:#16a34a;">✓ KTP tersimpan</span>' : ' <span style="color:#d97706;">⚠ KTP belum ada</span>');
     } else {
         ktpInput.setAttribute('required', 'required');
-        document.getElementById('authStatusText').innerHTML = `Sewa sebagai Guest. <a href="/login.html">Login</a> untuk isi otomatis.`;
+        document.getElementById('authStatusText').innerHTML =
+            `Sewa sebagai Guest. <a href="/login.html">Login</a> untuk isi otomatis.`;
+    }
+
+    // Aktifkan / nonaktifkan tombol submit berdasar checkbox TnC
+    const tncCheck = document.getElementById('tnc_agree');
+    const btnSubmit = document.getElementById('btn-submit');
+    if (tncCheck && btnSubmit) {
+        function syncTncBtn() {
+            btnSubmit.disabled = !tncCheck.checked;
+            btnSubmit.style.opacity = tncCheck.checked ? '1' : '0.5';
+            btnSubmit.style.cursor  = tncCheck.checked ? 'pointer' : 'not-allowed';
+        }
+        syncTncBtn(); // set initial state
+        tncCheck.addEventListener('change', syncTncBtn);
     }
 });
 
@@ -74,6 +103,14 @@ window.submitCheckout = async function() {
     if (!form.checkValidity()) {
         console.log('Form validation failed');
         form.reportValidity();
+        return;
+    }
+
+    // Validasi checkbox TnC
+    const tncCheck = document.getElementById('tnc_agree');
+    if (tncCheck && !tncCheck.checked) {
+        showToast('Harap centang persetujuan syarat & ketentuan terlebih dahulu.', 'warning');
+        document.getElementById('tnc_agree').scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
 

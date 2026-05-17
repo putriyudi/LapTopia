@@ -27,8 +27,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   
+  // ── Tombol Tambah Laptop ─────────────────────────────────
+  // PERUBAHAN: Reset juga field foto saat buka modal tambah
   const btnTambah = document.getElementById('btnTambahLaptop');
-  if(btnTambah) {
+  if (btnTambah) {
     btnTambah.addEventListener('click', () => {
       document.getElementById('modalLaptopTitle').innerText = 'Tambah Laptop';
       document.getElementById('lap_id').value = '';
@@ -37,6 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('lap_spek').value = '';
       document.getElementById('lap_harga').value = '';
       document.getElementById('lap_status').value = 'Tersedia';
+      // Reset foto
+      document.getElementById('lap_foto').value = '';
+      document.getElementById('lap_foto_existing').value = '';
+      document.getElementById('lap_foto_preview_wrap').style.display = 'none';
+      document.getElementById('lap_foto_hint').style.display = 'none';
+      document.getElementById('lap_foto_label').innerHTML =
+        'Foto Laptop <span style="font-size:0.78rem;color:#94a3b8;">(jpg, jpeg, png, webp · opsional)</span>';
       document.getElementById('modalLaptop').style.display = 'flex';
     });
   }
@@ -52,7 +61,7 @@ function switchTab(tabId, linkElement) {
   document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
   if (linkElement) linkElement.classList.add('active');
   const target = document.getElementById(`tab-${tabId}`);
-  if(target) target.style.display = 'block';
+  if (target) target.style.display = 'block';
   
   const titles = {
     'stats': 'Statistik Dashboard',
@@ -63,10 +72,10 @@ function switchTab(tabId, linkElement) {
     'otp': 'Otorisasi Akses KTP'
   };
   document.getElementById('pageTitle').innerText = titles[tabId];
-  if(tabId === 'stats') loadStats();
-  if(tabId === 'laptops') loadLaptops();
-  if(tabId === 'users') loadUsers();
-  if(tabId === 'laporan') loadLaporan();
+  if (tabId === 'stats') loadStats();
+  if (tabId === 'laptops') loadLaptops();
+  if (tabId === 'users') loadUsers();
+  if (tabId === 'laporan') loadLaporan();
 }
 
 async function loadStats() {
@@ -82,26 +91,70 @@ async function loadStats() {
   }
 }
 
+// ── Load Laptops ─────────────────────────────────────────────
+// PERUBAHAN: Kirim foto_laptop ke editLaptop via data-attribute agar aman dari
+//            karakter spesial (slash, dll) yang bisa membreak inline onclick string.
 async function loadLaptops() {
   showLoader();
   const res = await apiCall('/laptops?limit=50');
   hideLoader();
   const tb = document.getElementById('lapTable');
   tb.innerHTML = '';
-  if(res && res.status === 200) {
+  if (res && res.status === 200) {
     res.data.data.forEach(l => {
-      tb.innerHTML += `<tr>
-        <td>${l.nomor_seri}</td>
-        <td>${l.merk_tipe}</td>
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escHTMLAdmin(l.nomor_seri)}</td>
+        <td>${escHTMLAdmin(l.merk_tipe)}</td>
         <td>${formatRupiah(l.harga_sewa_per_hari)}</td>
-        <td>${l.status}</td>
+        <td>${escHTMLAdmin(l.status)}</td>
         <td>
-          <button class="btn btn-outline" style="padding:0.2rem 0.5rem;font-size:0.8rem;" onclick="editLaptop(${l.id_laptop}, '${l.nomor_seri}', '${l.merk_tipe}', '${l.spesifikasi || ''}', ${l.harga_sewa_per_hari}, '${l.status}')">Edit</button>
-          <button class="btn" style="padding:0.2rem 0.5rem;font-size:0.8rem;background:var(--error);color:white;border-color:var(--error);" onclick="deleteLaptop(${l.id_laptop})">Hapus</button>
+          <button class="btn btn-outline"
+                  style="padding:0.2rem 0.5rem;font-size:0.8rem;"
+                  data-id="${l.id_laptop}"
+                  data-sn="${escAttr(l.nomor_seri)}"
+                  data-merk="${escAttr(l.merk_tipe)}"
+                  data-spek="${escAttr(l.spesifikasi || '')}"
+                  data-harga="${l.harga_sewa_per_hari}"
+                  data-status="${escAttr(l.status)}"
+                  data-foto="${escAttr(l.foto_laptop || '')}">Edit</button>
+          <button class="btn"
+                  style="padding:0.2rem 0.5rem;font-size:0.8rem;background:var(--error);color:white;border-color:var(--error);"
+                  data-del-id="${l.id_laptop}">Hapus</button>
         </td>
-      </tr>`;
+      `;
+
+      // Bind Edit button
+      tr.querySelector('[data-id]').addEventListener('click', function () {
+        editLaptop(
+          this.dataset.id,
+          this.dataset.sn,
+          this.dataset.merk,
+          this.dataset.spek,
+          this.dataset.harga,
+          this.dataset.status,
+          this.dataset.foto
+        );
+      });
+
+      // Bind Hapus button
+      tr.querySelector('[data-del-id]').addEventListener('click', function () {
+        deleteLaptop(this.dataset.delId);
+      });
+
+      tb.appendChild(tr);
     });
   }
+}
+
+// Helper escape untuk innerHTML (bukan onclick string lagi)
+function escHTMLAdmin(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+function escAttr(str) {
+  return String(str ?? '').replace(/"/g, '&quot;');
 }
 
 async function loadUsers() {
@@ -110,13 +163,13 @@ async function loadUsers() {
   hideLoader();
   const tb = document.getElementById('usrTable');
   tb.innerHTML = '';
-  if(res && res.status === 200) {
+  if (res && res.status === 200) {
     res.data.data.forEach(u => {
       tb.innerHTML += `<tr>
         <td>${u.id_user}</td>
-        <td>${u.nama_lengkap}</td>
-        <td>${u.email}</td>
-        <td><span class="badge badge-secondary">${u.role}</span></td>
+        <td>${escHTMLAdmin(u.nama_lengkap)}</td>
+        <td>${escHTMLAdmin(u.email)}</td>
+        <td><span class="badge badge-secondary">${escHTMLAdmin(u.role)}</span></td>
         <td>${formatJustDate(u.created_at)}</td>
         <td>
           <button class="btn btn-outline" style="padding:0.2rem 0.5rem;font-size:0.8rem;" onclick="editUserRole(${u.id_user}, '${u.role}')">Ubah Role</button>
@@ -136,7 +189,6 @@ window.loadLaporan = async function() {
     const sampai = document.getElementById('filter_sampai').value;
     const status = document.getElementById('filter_status').value;
     
-    // Set opacity to reduce "flicker" look while loading
     const tbody = document.getElementById('lapTrxTable');
     tbody.style.opacity = '0.6';
 
@@ -154,20 +206,19 @@ window.loadLaporan = async function() {
         tbody.innerHTML += `
           <tr>
             <td>${index + 1}</td>
-            <td>${trx.nama_penyewa}<br><small>${trx.email_penyewa}</small></td>
-            <td>${trx.merk_tipe}</td>
+            <td>${escHTMLAdmin(trx.nama_penyewa)}<br><small>${escHTMLAdmin(trx.email_penyewa)}</small></td>
+            <td>${escHTMLAdmin(trx.merk_tipe)}</td>
             <td>${formatRupiah(trx.total_biaya)}</td>
-            <td><span class="badge ${trx.status_transaksi === 'Selesai' ? 'badge-success' : 'badge-warning'}">${trx.status_transaksi}</span></td>
+            <td><span class="badge ${trx.status_transaksi === 'Selesai' ? 'badge-success' : 'badge-warning'}">${escHTMLAdmin(trx.status_transaksi)}</span></td>
             <td>${formatJustDate(trx.created_at)}</td>
             <td><button class="btn btn-outline" style="padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="lihatDetailAdmin(${trx.id_transaksi})">Detail</button></td>
           </tr>
         `;
       });
     }
-  }, 300); // 300ms debounce
+  }, 300);
 }
 
-// Fungsi Lihat Detail Lengkap (Pop-up) untuk Admin
 window.lihatDetailAdmin = async function(id) {
     showLoader();
     const dari = document.getElementById('filter_dari')?.value || '';
@@ -183,24 +234,23 @@ window.lihatDetailAdmin = async function(id) {
     const res = await apiCall('/admin/laporan' + qs); 
     hideLoader();
     
-    if(res && res.status === 200) {
+    if (res && res.status === 200) {
         const trx = res.data.data.find(t => t.id_transaksi == id);
-        if(!trx) return showToast("Data tidak ditemukan", "error");
+        if (!trx) return showToast("Data tidak ditemukan", "error");
         
         const content = document.getElementById('detailContent');
-        const token = localStorage.getItem('token');
         content.innerHTML = `
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
                 <div>
                     <p><strong>ID Transaksi:</strong> #${trx.id_transaksi}</p>
-                    <p><strong>Nama:</strong> ${trx.nama_penyewa}</p>
-                    <p><strong>NIK:</strong> ${trx.nik_penyewa}</p>
-                    <p><strong>No HP:</strong> ${trx.no_hp_penyewa || '-'}</p>
-                    <p><strong>Email:</strong> ${trx.email_penyewa}</p>
+                    <p><strong>Nama:</strong> ${escHTMLAdmin(trx.nama_penyewa)}</p>
+                    <p><strong>NIK:</strong> ${escHTMLAdmin(trx.nik_penyewa)}</p>
+                    <p><strong>No HP:</strong> ${escHTMLAdmin(trx.no_hp_penyewa || '-')}</p>
+                    <p><strong>Email:</strong> ${escHTMLAdmin(trx.email_penyewa)}</p>
                 </div>
                 <div>
-                    <p><strong>Laptop:</strong> ${trx.merk_tipe}</p>
-                    <p><strong>SN:</strong> ${trx.nomor_seri}</p>
+                    <p><strong>Laptop:</strong> ${escHTMLAdmin(trx.merk_tipe)}</p>
+                    <p><strong>SN:</strong> ${escHTMLAdmin(trx.nomor_seri)}</p>
                     <p><strong>Tgl Sewa:</strong> ${formatJustDate(trx.tgl_mulai_sewa)}</p>
                     <p><strong>Durasi:</strong> ${trx.durasi_hari} Hari</p>
                     <p><strong>Total:</strong> ${formatRupiah(trx.total_biaya)}</p>
@@ -261,8 +311,6 @@ window.openOTPModal = function(id_transaksi) {
             img.src = url;
             img.style.display = 'block';
             placeholder.style.display = 'none';
-            
-            // Zoom functionality
             img.onclick = () => openZoom(url);
             
             closeModal('modalOTP');
@@ -321,7 +369,7 @@ window.deleteTransaksiAdmin = async function(id) {
       showLoader();
       const res = await apiCall(`/admin/transaksi/${id}`, 'DELETE');
       hideLoader();
-      if(res && res.status === 200) {
+      if (res && res.status === 200) {
           showToast('Transaksi berhasil dihapus.', 'success');
           closeModal('modalDetail');
           loadLaporan();
@@ -333,19 +381,57 @@ window.deleteTransaksiAdmin = async function(id) {
   );
 }
 
-// Laptops Logic
+// ══════════════════════════════════════════════════════════════
+//  LAPTOPS LOGIC — PERUBAHAN UTAMA
+// ══════════════════════════════════════════════════════════════
+
+// Preview foto yang dipilih user di input file
+window.previewFotoLaptop = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById('lap_foto_preview');
+  const wrap = document.getElementById('lap_foto_preview_wrap');
+  img.src = url;
+  wrap.style.display = 'block';
+  document.getElementById('lap_foto_preview_wrap')
+    .querySelector('label').innerText = 'Preview Foto Baru';
+};
+
+// Submit laptop — gunakan FormData agar bisa kirim file sekaligus field teks
 async function submitLaptop() {
   const id = document.getElementById('lap_id').value;
-  const data = {
-    nomor_seri: document.getElementById('lap_sn').value,
-    merk_tipe: document.getElementById('lap_merk').value,
-    spesifikasi: document.getElementById('lap_spek').value,
-    harga_sewa_per_hari: document.getElementById('lap_harga').value,
-    status: document.getElementById('lap_status').value
-  };
+  const fileInput = document.getElementById('lap_foto');
+  const file = fileInput.files[0];
+
+  // Validasi tipe file di sisi client (double-check sebelum kirim)
+  if (file) {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      return showToast('Foto harus berformat jpg, jpeg, png, atau webp.', 'error');
+    }
+  }
+
+  const formData = new FormData();
+  formData.append('nomor_seri', document.getElementById('lap_sn').value);
+  formData.append('merk_tipe', document.getElementById('lap_merk').value);
+  formData.append('spesifikasi', document.getElementById('lap_spek').value);
+  formData.append('harga_sewa_per_hari', document.getElementById('lap_harga').value);
+  formData.append('status', document.getElementById('lap_status').value);
+  if (file) {
+    formData.append('foto_laptop', file);
+  }
+
   showLoader();
-  const res = await apiCall(id ? `/laptops/${id}` : '/laptops', id ? 'PUT' : 'POST', data);
+  // isFormData = true → apiCall tidak set Content-Type (biar browser set boundary otomatis)
+  const res = await apiCall(
+    id ? `/laptops/${id}` : '/laptops',
+    id ? 'PUT' : 'POST',
+    formData,
+    true
+  );
   hideLoader();
+
   if (res && (res.status === 200 || res.status === 201)) {
     showToast(`Laptop berhasil ${id ? 'diupdate' : 'ditambahkan'}.`, 'success');
     closeModal('modalLaptop');
@@ -355,7 +441,8 @@ async function submitLaptop() {
   }
 }
 
-function editLaptop(id, sn, merk, spek, harga, status) {
+// Buka modal edit laptop — tampilkan foto lama jika ada
+function editLaptop(id, sn, merk, spek, harga, status, foto) {
   document.getElementById('modalLaptopTitle').innerText = 'Edit Laptop';
   document.getElementById('lap_id').value = id;
   document.getElementById('lap_sn').value = sn;
@@ -363,6 +450,30 @@ function editLaptop(id, sn, merk, spek, harga, status) {
   document.getElementById('lap_spek').value = spek || '';
   document.getElementById('lap_harga').value = harga;
   document.getElementById('lap_status').value = status;
+
+  // Reset input file (pastikan tidak membawa file sesi sebelumnya)
+  document.getElementById('lap_foto').value = '';
+  document.getElementById('lap_foto_existing').value = foto || '';
+
+  const previewWrap = document.getElementById('lap_foto_preview_wrap');
+  const previewImg  = document.getElementById('lap_foto_preview');
+  const hint        = document.getElementById('lap_foto_hint');
+  const fotoLabel   = document.getElementById('lap_foto_label');
+
+  if (foto) {
+    // Ada foto lama → tampilkan preview dan hint "kosongkan jika tidak ingin ganti"
+    previewImg.src = `/${foto}`;
+    previewWrap.style.display = 'block';
+    previewWrap.querySelector('label').innerText = 'Foto Saat Ini';
+    hint.style.display = 'block';
+    fotoLabel.innerHTML = 'Ganti Foto <span style="font-size:0.78rem;color:#94a3b8;">(jpg, jpeg, png, webp · opsional)</span>';
+  } else {
+    // Belum ada foto
+    previewWrap.style.display = 'none';
+    hint.style.display = 'none';
+    fotoLabel.innerHTML = 'Foto Laptop <span style="font-size:0.78rem;color:#94a3b8;">(jpg, jpeg, png, webp · opsional)</span>';
+  }
+
   document.getElementById('modalLaptop').style.display = 'flex';
 }
 
@@ -386,7 +497,7 @@ async function deleteLaptop(id) {
   );
 }
 
-// Users Logic
+// ── Users Logic ───────────────────────────────────────────────
 function editUserRole(id, currentRole) {
   document.getElementById('usr_id').value = id;
   document.getElementById('usr_role').value = currentRole;

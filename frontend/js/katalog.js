@@ -2,7 +2,7 @@
 let currentPage = 1;
 
 function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>'"]/g, (char) => ({
+    return String(value ?? '').replace(/[&<>'\"]/g, (char) => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
@@ -12,7 +12,7 @@ function escapeHTML(value) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Inisialisasi Auth Nav (Pastikan tombol dashboard/logout muncul)
+    // 1. Inisialisasi Auth Nav
     if (typeof updateNavbarAuth === 'function') {
         updateNavbarAuth();
     } else if (typeof updateAuthNav === 'function') {
@@ -90,12 +90,20 @@ async function loadKatalog(page = 1) {
             const merkTipe = escapeHTML(laptop.merk_tipe);
             const spesifikasi = escapeHTML(laptop.spesifikasi || '-');
             
-            // Render kartu laptop
+            // ── PERUBAHAN: Tampilkan foto laptop jika ada, fallback ke placeholder SVG ──
+            const fotoHTML = laptop.foto_laptop
+                ? `<img
+                     src="/${escapeHTML(laptop.foto_laptop)}"
+                     alt="${merkTipe}"
+                     style="width:100%; height:100%; object-fit:cover; border-radius:8px 8px 0 0;"
+                     onerror="this.parentElement.innerHTML='<svg fill=\\'none\\' stroke=\\'currentColor\\' viewBox=\\'0 0 24 24\\' style=\\'width:60px;opacity:0.3;\\'><path stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'1.5\\' d=\\'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z\\'></path></svg>'">`
+                : `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 60px; opacity: 0.3;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>`;
+
             const card = document.createElement('div');
             card.className = 'card laptop-card';
             card.innerHTML = `
-                <div class="laptop-image-placeholder">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 60px; opacity: 0.3;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <div class="laptop-image-placeholder" style="${laptop.foto_laptop ? 'padding:0; overflow:hidden; height:180px;' : ''}">
+                    ${fotoHTML}
                 </div>
                 <div class="laptop-content">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.75rem; margin-bottom:.65rem;">
@@ -116,7 +124,7 @@ async function loadKatalog(page = 1) {
             if (isTersedia) {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const auth = getAuth(); // Cek login dari api.js
+                    const auth = getAuth();
                     if (!auth) {
                         alert("Kamu harus punya akun dulu untuk menyewa.");
                         window.location.href = '/register.html';

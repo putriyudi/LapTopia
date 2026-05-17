@@ -141,7 +141,7 @@ router.post('/login',
 router.get('/profile', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id_user, username, email, role, nama_lengkap, nik, no_hp, alamat, created_at FROM users WHERE id_user = ?',
+      'SELECT id_user, username, email, role, nama_lengkap, nik, no_hp, alamat, foto_ktp_path, created_at FROM users WHERE id_user = ?',
       [req.user.id_user]
     );
     if (rows.length === 0) return res.status(404).json({ success: false, message: 'User tidak ditemukan.' });
@@ -157,12 +157,19 @@ router.put('/profile', verifyToken,
   handleUploadError,
   async (req, res) => {
     const { nama_lengkap, no_hp, nik, alamat, username } = req.body;
-    const updates = {};
 
+    // Validasi NIK 16 digit jika dikirim
+    if (nik !== undefined && nik !== '') {
+      if (!/^\d{16}$/.test(nik)) {
+        return res.status(400).json({ success: false, message: 'NIK harus berupa 16 digit angka.' });
+      }
+    }
+
+    const updates = {};
     if (nama_lengkap) updates.nama_lengkap = nama_lengkap;
     if (no_hp)        updates.no_hp = no_hp;
-    if (nik)          updates.nik = nik;
-    if (alamat)       updates.alamat = alamat;
+    if (nik !== undefined && nik !== '') updates.nik = nik;
+    if (alamat !== undefined) updates.alamat = alamat;
     if (username)     updates.username = username;
     if (req.file)     updates.foto_ktp_path = req.file.path;
 
@@ -190,6 +197,24 @@ router.put('/profile', verifyToken,
     }
   }
 );
+
+// ── HAPUS FOTO KTP ────────────────────────────────────────
+router.delete('/profile/ktp', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT foto_ktp_path FROM users WHERE id_user = ?', [req.user.id_user]);
+    if (!rows.length || !rows[0].foto_ktp_path) {
+      return res.status(404).json({ success: false, message: 'Foto KTP tidak ditemukan.' });
+    }
+    const oldPath = rows[0].foto_ktp_path;
+    const fs = require('fs');
+    fs.unlink(oldPath, (err) => { if (err) console.error('Gagal hapus file KTP:', err); });
+    await db.query('UPDATE users SET foto_ktp_path = NULL WHERE id_user = ?', [req.user.id_user]);
+    res.json({ success: true, message: 'Foto KTP berhasil dihapus.' });
+  } catch (err) {
+    console.error('Hapus KTP error:', err);
+    res.status(500).json({ success: false, message: 'Server error.' });
+  }
+});
 
 // ── CHANGE PASSWORD ───────────────────────────────────────
 router.put('/change-password', verifyToken,

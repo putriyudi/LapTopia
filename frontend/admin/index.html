@@ -21,7 +21,7 @@
         <a href="#" class="sidebar-link">Laporan Transaksi</a>
         <a href="#" class="sidebar-link">Laporan Keamanan</a>
         <a href="#" class="sidebar-link">Otorisasi KTP</a>
-        <a href="/" class="sidebar-link" target="_blank">Lihat Website</a>
+        <a href="/" class="sidebar-link">Lihat Website</a>
         <a href="#" class="sidebar-link" style="color: #fca5a5; margin-top: auto;" onclick="logout();return false;">Logout</a>
       </nav>
     </aside>
@@ -174,12 +174,39 @@
     </main>
   </div>
 
+  <!-- ── MODAL LAPTOP ─────────────────────────────────────────── -->
+  <!-- PERUBAHAN: Tambah preview foto, input upload foto, hidden input foto_path -->
   <div id="modalLaptop" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
-    <div class="card" style="width: 400px; position:relative;">
-      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalLaptop')">✕</button>
+    <div class="card" style="width: 420px; position:relative; max-height: 92vh; overflow-y: auto;">
+      <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto; z-index:1;" onclick="closeModal('modalLaptop')">✕</button>
       <div class="card-header"><h3 id="modalLaptopTitle">Tambah Laptop</h3></div>
       <div class="card-body">
         <input type="hidden" id="lap_id">
+        <input type="hidden" id="lap_foto_existing">
+
+        <!-- Preview foto laptop saat ini (tampil hanya jika ada foto) -->
+        <div id="lap_foto_preview_wrap" class="form-group" style="display:none; text-align:center;">
+          <label style="display:block; margin-bottom:0.4rem;">Foto Saat Ini</label>
+          <img id="lap_foto_preview"
+               src=""
+               alt="Foto Laptop"
+               style="width:100%; max-height:180px; object-fit:contain; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; padding:6px;">
+        </div>
+
+        <!-- Input upload foto baru -->
+        <div class="form-group">
+          <label id="lap_foto_label">Foto Laptop <span style="font-size:0.78rem; color:#94a3b8;">(jpg, jpeg, png, webp · maks <?php echo getenv('MAX_FILE_SIZE_MB') ?: 5; ?>MB)</span></label>
+          <input type="file"
+                 id="lap_foto"
+                 class="form-control"
+                 accept=".jpg,.jpeg,.png,.webp"
+                 style="padding:0.35rem;"
+                 onchange="previewFotoLaptop(this)">
+          <p id="lap_foto_hint" style="font-size:0.78rem; color:#94a3b8; margin-top:0.3rem; display:none;">
+            Kosongkan jika tidak ingin mengganti foto.
+          </p>
+        </div>
+
         <div class="form-group"><label>Nomor Seri</label><input type="text" id="lap_sn" class="form-control" required></div>
         <div class="form-group"><label>Merk / Tipe</label><input type="text" id="lap_merk" class="form-control" required></div>
         <div class="form-group"><label>Spesifikasi</label><input type="text" id="lap_spek" class="form-control"></div>
@@ -215,6 +242,7 @@
       </div>
     </div>
   </div>
+
   <div id="modalDetail" class="toast-container" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
     <div class="card" style="width: 500px; position:relative;">
       <button class="btn btn-outline" style="position:absolute; top:10px; right:10px; width:auto;" onclick="closeModal('modalDetail')">✕</button>
@@ -250,6 +278,7 @@
         <button class="btn" style="color: white; border: none; padding: 0;" onclick="resetZoom(); event.stopPropagation()">🔄</button>
     </div>
   </div>
+
   <script src="/js/api.js"></script>
   <script src="/js/dashboard-admin.js"></script>
 </body>
