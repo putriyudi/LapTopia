@@ -3,6 +3,7 @@ node_modules/
 
 # Mengabaikan file konfigurasi sensitif (password DB, API key, dll)
 .env
+.env.example
 
 # Mengabaikan isi folder uploads (foto KTP, dll)
 # Tapi tetap menyisakan foldernya agar tidak error saat di-clone

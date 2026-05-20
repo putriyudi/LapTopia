@@ -58,9 +58,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ktpLabel  = document.querySelector('#guestKtpSection label');
         if (ktpLabel) {
             if (hasKtp) {
-                ktpLabel.innerHTML = '📎 Ganti Foto KTP <span style="font-size:0.78rem;color:#16a34a;font-weight:600;">(KTP sudah tersimpan di profil — upload baru untuk mengganti)</span>';
+                ktpLabel.innerHTML = 'Upload Foto KTP <span style="font-size:0.78rem;color:#16a34a;font-weight:600;"></span>';
             } else {
-                ktpLabel.innerHTML = '📎 Upload Foto KTP Asli <span style="font-size:0.78rem;color:#d97706;font-weight:600;">(Belum ada di profil — upload sekarang)</span>';
+                ktpLabel.innerHTML = 'Upload Foto KTP Asli <span style="font-size:0.78rem;color:#d97706;font-weight:600;">(Belum ada di profil — upload sekarang)</span>';
             }
         }
         document.getElementById('authStatusText').innerHTML =
